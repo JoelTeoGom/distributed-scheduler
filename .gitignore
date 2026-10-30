@@ -1,0 +1,21 @@
+# AI tooling
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
