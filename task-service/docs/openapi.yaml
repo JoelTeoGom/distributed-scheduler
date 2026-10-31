@@ -1,0 +1,609 @@
+openapi: 3.0.3
+info:
+  title: Task Service API
+  version: 1.0.0
+  description: |
+    Creates and manages tasks: HTTP calls scheduled once (`at`) or on a cron
+    expression. A task is the configuration; each execution is a job, which is
+    served by the Job Service and not by this API.
+
+    **Tenancy.** The tenant comes from the JWT, never from the request. A task
+    of another tenant behaves as if it did not exist (`404`).
+
+    **Timestamps.** Always UTC, in RFC 3339 format.
+
+    **Request bodies.** JSON up to 1 MiB. Unknown fields are rejected with `400`.
+servers:
+  - url: http://localhost:8080
+    description: Local
+tags:
+  - name: Tasks
+  - name: Health
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      summary: Check that the service is up
+      security: []
+      responses:
+        "200":
+          description: The service is up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /tasks:
+    post:
+      tags: [Tasks]
+      operationId: createTask
+      summary: Create a task
+      description: |
+        Send an `Idempotency-Key` to retry safely. Repeating the key with the
+        same body returns the original task with `200`, even if it was deleted
+        or its `run_at` has passed. Repeating it with a different body returns
+        `422`. Keys are case sensitive and scoped to the tenant.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+            examples:
+              cron:
+                summary: Every day at 09:00 in Madrid
+                value:
+                  name: nightly report
+                  schedule:
+                    type: cron
+                    cron_expr: "0 9 * * *"
+                    timezone: Europe/Madrid
+                  priority: high
+                  request:
+                    method: POST
+                    url: https://api.example.com/hook
+                    headers:
+                      X-Trace: "1"
+                    body: '{"report":"daily"}'
+                    secret_ref: secrets/report
+                  timeout_seconds: 30
+                  retry:
+                    max_attempts: 3
+                    backoff_base_seconds: 10
+              at:
+                summary: Once, at a given time
+                value:
+                  name: send invoice
+                  schedule:
+                    type: at
+                    run_at: "2030-01-15T09:00:00Z"
+                  priority: normal
+                  request:
+                    method: GET
+                    url: https://api.example.com/invoices
+                  timeout_seconds: 10
+                  retry:
+                    max_attempts: 1
+                    backoff_base_seconds: 1
+      responses:
+        "200":
+          description: The key was already used with this body. Returns the original task.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "201":
+          description: Task created.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: The `Idempotency-Key` was already used with a different body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: idempotency key reused with a different body
+        "500":
+          $ref: "#/components/responses/InternalError"
+    get:
+      tags: [Tasks]
+      operationId: listTasks
+      summary: List the tasks of the tenant
+      description: Returns tasks in creation order. Deleted tasks are not listed.
+      parameters:
+        - name: cursor
+          in: query
+          description: The `next_cursor` of the previous page.
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: One page of tasks.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /tasks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      tags: [Tasks]
+      operationId: getTask
+      summary: Get a task
+      responses:
+        "200":
+          $ref: "#/components/responses/TaskOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      tags: [Tasks]
+      operationId: updateTask
+      summary: Edit a task
+      description: |
+        Only the fields present change. `schedule`, `request` and `retry` are
+        replaced as a whole, so send them complete. Changing `schedule`
+        recalculates `next_run_at`, which can reactivate a finished `at` task.
+        Any successful request increases `version`, even an empty `{}`.
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          description: The version being edited, as returned in `ETag`.
+          schema:
+            type: string
+          example: '"3"'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskRequest"
+            example:
+              name: renamed report
+              priority: critical
+      responses:
+        "200":
+          $ref: "#/components/responses/TaskOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          description: The task changed since that version. Reload it and try again.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: version conflict
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "428":
+          description: The `If-Match` header is missing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: If-Match header is required
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [Tasks]
+      operationId: deleteTask
+      summary: Delete a task
+      description: Soft delete. Afterwards the task answers `404` everywhere.
+      responses:
+        "204":
+          description: Task deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /tasks/{id}/pause:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      tags: [Tasks]
+      operationId: pauseTask
+      summary: Pause a task
+      description: Pausing a task that is already paused changes nothing and returns `200`.
+      responses:
+        "200":
+          $ref: "#/components/responses/TaskOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /tasks/{id}/resume:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      tags: [Tasks]
+      operationId: resumeTask
+      summary: Resume a task
+      description: |
+        A cron task jumps to its next future run and missed runs are not
+        recovered. An `at` task keeps its pending run, so it fires right away if
+        it became overdue while paused. Resuming an active task changes nothing
+        and returns `200`.
+      responses:
+        "200":
+          $ref: "#/components/responses/TaskOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256 token with the claims `tenant_id` (UUID) and `exp`, both required.
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      description: Printable ASCII. Optional, but needed to retry a POST safely.
+      schema:
+        type: string
+        maxLength: 255
+      example: 6f1c2a9e-request
+  headers:
+    ETag:
+      description: The task version, to send back in `If-Match`.
+      schema:
+        type: string
+      example: '"1"'
+    Location:
+      description: Path of the task.
+      schema:
+        type: string
+      example: /tasks/019a1b2c-3d4e-7f60-8a9b-0c1d2e3f4a5b
+  responses:
+    TaskOk:
+      description: The task.
+      headers:
+        ETag:
+          $ref: "#/components/headers/ETag"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Task"
+    BadRequest:
+      description: Invalid id, query parameter, header or body. `error` says what to fix.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "invalid input: run_at must be in the future"
+    Unauthorized:
+      description: Missing, invalid or expired token.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+          example: Bearer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: unauthorized
+    NotFound:
+      description: The task does not exist, was deleted or belongs to another tenant.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: task not found
+    Conflict:
+      description: The task changed during the request. Retry it.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: version conflict
+    PayloadTooLarge:
+      description: The body is larger than 1 MiB.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: request body is too large
+    InternalError:
+      description: Unexpected failure. The details stay in the server logs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: internal server error
+  schemas:
+    Priority:
+      type: string
+      enum: [critical, high, normal, low]
+    Status:
+      type: string
+      enum: [active, paused, deleted]
+    AtSchedule:
+      type: object
+      additionalProperties: false
+      required: [type, run_at]
+      properties:
+        type:
+          type: string
+          enum: [at]
+        run_at:
+          type: string
+          format: date-time
+          description: Must be in the future.
+        timezone:
+          type: string
+          maxLength: 64
+          default: UTC
+    CronSchedule:
+      type: object
+      additionalProperties: false
+      required: [type, cron_expr]
+      properties:
+        type:
+          type: string
+          enum: [cron]
+        cron_expr:
+          type: string
+          maxLength: 255
+          description: Five fields. `@hourly` style descriptors are not accepted.
+          example: "*/5 * * * *"
+        timezone:
+          type: string
+          maxLength: 64
+          default: UTC
+          description: IANA name used to evaluate `cron_expr`.
+          example: Europe/Madrid
+    Schedule:
+      oneOf:
+        - $ref: "#/components/schemas/AtSchedule"
+        - $ref: "#/components/schemas/CronSchedule"
+      discriminator:
+        propertyName: type
+        mapping:
+          at: "#/components/schemas/AtSchedule"
+          cron: "#/components/schemas/CronSchedule"
+    HttpRequest:
+      type: object
+      additionalProperties: false
+      description: The HTTP call every job of the task makes.
+      required: [method, url]
+      properties:
+        method:
+          type: string
+          enum: [GET, POST, PUT, PATCH, DELETE]
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Must use `https`. It cannot contain credentials or point to an
+            internal address, such as `localhost` or a private IP.
+        headers:
+          type: object
+          description: |
+            Non-sensitive headers only. `Authorization`, `Proxy-Authorization`,
+            `Cookie` and `X-Api-Key` are rejected: use `secret_ref`.
+          additionalProperties:
+            type: string
+        body:
+          type: string
+          description: Text only, binary bodies are not supported.
+        secret_ref:
+          type: string
+          maxLength: 255
+          description: Reference to a secret, never the secret itself.
+    RetryPolicy:
+      type: object
+      additionalProperties: false
+      required: [max_attempts, backoff_base_seconds]
+      properties:
+        max_attempts:
+          type: integer
+          minimum: 1
+          maximum: 255
+        backoff_base_seconds:
+          type: integer
+          minimum: 1
+          maximum: 86400
+          description: "Delay before retry n: `backoff_base_seconds * 2^(n-1)`."
+    CreateTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [name, schedule, priority, request, timeout_seconds, retry]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        schedule:
+          $ref: "#/components/schemas/Schedule"
+        priority:
+          $ref: "#/components/schemas/Priority"
+        request:
+          $ref: "#/components/schemas/HttpRequest"
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+        retry:
+          $ref: "#/components/schemas/RetryPolicy"
+    UpdateTaskRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        schedule:
+          $ref: "#/components/schemas/Schedule"
+        priority:
+          $ref: "#/components/schemas/Priority"
+        request:
+          $ref: "#/components/schemas/HttpRequest"
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+        retry:
+          $ref: "#/components/schemas/RetryPolicy"
+    Task:
+      type: object
+      required:
+        - id
+        - name
+        - schedule
+        - priority
+        - request
+        - timeout_seconds
+        - retry
+        - status
+        - version
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        schedule:
+          $ref: "#/components/schemas/Schedule"
+        priority:
+          $ref: "#/components/schemas/Priority"
+        request:
+          $ref: "#/components/schemas/HttpRequest"
+        timeout_seconds:
+          type: integer
+        retry:
+          $ref: "#/components/schemas/RetryPolicy"
+        status:
+          $ref: "#/components/schemas/Status"
+        next_run_at:
+          type: string
+          format: date-time
+          description: Absent when there is nothing left to run.
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TaskPage:
+      type: object
+      required: [tasks]
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        next_cursor:
+          type: string
+          format: uuid
+          description: Absent on the last page.
+    Health:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: task-service
+        version:
+          type: string
+          example: dev
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
