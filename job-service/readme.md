@@ -28,7 +28,9 @@ internal/
     └── out/
         ├── mysql/        job repository (pending)
         └── token/        JWT verification
-migrations/               schema SQL for the jobs table
+migrations/
+├── mysql/                hot jobs table
+└── cassandra/            job history and lookup by id
 docs/                     OpenAPI spec
 ```
 
