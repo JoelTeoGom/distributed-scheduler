@@ -18,8 +18,8 @@ type HTTPRequestDTO struct {
 }
 
 type RetryDTO struct {
-	MaxAttempts        int `json:"max_attempts"`
-	BackoffBaseSeconds int `json:"backoff_base_seconds"`
+	MaxAttempts        int    `json:"max_attempts"`
+	BackoffBaseSeconds uint32 `json:"backoff_base_seconds"`
 }
 
 type CreateTaskRequest struct {
@@ -27,7 +27,7 @@ type CreateTaskRequest struct {
 	Schedule       ScheduleDTO    `json:"schedule"`
 	Priority       string         `json:"priority"`
 	Request        HTTPRequestDTO `json:"request"`
-	TimeoutSeconds int            `json:"timeout_seconds"`
+	TimeoutSeconds uint32         `json:"timeout_seconds"`
 	Retry          RetryDTO       `json:"retry"`
 }
 
@@ -36,7 +36,7 @@ type UpdateTaskRequest struct {
 	Schedule       *ScheduleDTO    `json:"schedule"`
 	Priority       *string         `json:"priority"`
 	Request        *HTTPRequestDTO `json:"request"`
-	TimeoutSeconds *int            `json:"timeout_seconds"`
+	TimeoutSeconds *uint32         `json:"timeout_seconds"`
 	Retry          *RetryDTO       `json:"retry"`
 }
 
@@ -46,7 +46,7 @@ type TaskResponse struct {
 	Schedule       ScheduleDTO    `json:"schedule"`
 	Priority       string         `json:"priority"`
 	Request        HTTPRequestDTO `json:"request"`
-	TimeoutSeconds int            `json:"timeout_seconds"`
+	TimeoutSeconds uint32         `json:"timeout_seconds"`
 	Retry          RetryDTO       `json:"retry"`
 	Status         string         `json:"status"`
 	NextRunAt      *time.Time     `json:"next_run_at,omitempty"`

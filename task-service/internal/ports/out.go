@@ -23,3 +23,7 @@ type TaskRepository interface {
 type NextRunCalculator interface {
 	Next(cronExpr, timezone string, after time.Time) (time.Time, error)
 }
+
+type TokenVerifier interface {
+	Verify(token string) (tenantID uuid.UUID, err error)
+}

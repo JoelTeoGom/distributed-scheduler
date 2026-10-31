@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/domain"
@@ -11,7 +10,7 @@ import (
 
 type taskOperation func(ctx context.Context, tenantID, taskID uuid.UUID) (domain.Task, error)
 
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, HealthResponse{
 		Status:  "ok",
 		Service: s.serviceName,
@@ -19,29 +18,26 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) createTaskHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createTask(w http.ResponseWriter, r *http.Request) error {
 	var request CreateTaskRequest
-	body, ok := readJSON(w, r, &request)
-	if !ok {
-		return
+	body, err := decodeJSON(w, r, &request)
+	if err != nil {
+		return err
 	}
 
 	input, err := request.toInput()
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
 	idempotency, err := parseIdempotencyKey(r.Header.Get(idempotencyKeyHeader), body)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
-	task, replayed, err := s.taskService.Create(r.Context(), TenantID(r.Context()), idempotency, input)
+	task, replayed, err := s.taskService.Create(r.Context(), tenantIDFrom(r.Context()), idempotency, input)
 	if err != nil {
-		writeServiceError(w, r, err)
-		return
+		return err
 	}
 
 	status := http.StatusCreated
@@ -50,105 +46,91 @@ func (s *Server) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", "/tasks/"+task.ID.String())
 	writeTask(w, status, task)
+	return nil
 }
 
-func (s *Server) listTasksHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) listTasks(w http.ResponseWriter, r *http.Request) error {
 	page, err := parsePageRequest(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
-	taskPage, err := s.taskService.List(r.Context(), TenantID(r.Context()), page)
+	taskPage, err := s.taskService.List(r.Context(), tenantIDFrom(r.Context()), page)
 	if err != nil {
-		writeServiceError(w, r, err)
-		return
+		return err
 	}
 
 	writeJSON(w, http.StatusOK, toTaskPageResponse(taskPage))
+	return nil
 }
 
-func (s *Server) getTaskHandler(w http.ResponseWriter, r *http.Request) {
-	s.applyToTask(w, r, s.taskService.Get)
+func (s *Server) getTask(w http.ResponseWriter, r *http.Request) error {
+	return s.applyToTask(w, r, s.taskService.Get)
 }
 
-func (s *Server) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateTask(w http.ResponseWriter, r *http.Request) error {
 	taskID, err := parseTaskID(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
-	ifMatch := r.Header.Get("If-Match")
-	if ifMatch == "" {
-		writeError(w, http.StatusPreconditionRequired, "If-Match header is required")
-		return
-	}
-	expectedVersion, err := parseExpectedVersion(ifMatch)
+	expectedVersion, err := parseExpectedVersion(r.Header.Get(ifMatchHeader))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
 	var request UpdateTaskRequest
-	if _, ok := readJSON(w, r, &request); !ok {
-		return
+	if _, err := decodeJSON(w, r, &request); err != nil {
+		return err
 	}
 
 	input, err := request.toInput()
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
-	task, err := s.taskService.Update(r.Context(), TenantID(r.Context()), taskID, expectedVersion, input)
-	if errors.Is(err, domain.ErrVersionConflict) {
-		writeError(w, http.StatusPreconditionFailed, err.Error())
-		return
-	}
+	task, err := s.taskService.Update(r.Context(), tenantIDFrom(r.Context()), taskID, expectedVersion, input)
 	if err != nil {
-		writeServiceError(w, r, err)
-		return
+		return err
 	}
 
 	writeTask(w, http.StatusOK, task)
+	return nil
 }
 
-func (s *Server) pauseTaskHandler(w http.ResponseWriter, r *http.Request) {
-	s.applyToTask(w, r, s.taskService.Pause)
+func (s *Server) pauseTask(w http.ResponseWriter, r *http.Request) error {
+	return s.applyToTask(w, r, s.taskService.Pause)
 }
 
-func (s *Server) resumeTaskHandler(w http.ResponseWriter, r *http.Request) {
-	s.applyToTask(w, r, s.taskService.Resume)
+func (s *Server) resumeTask(w http.ResponseWriter, r *http.Request) error {
+	return s.applyToTask(w, r, s.taskService.Resume)
 }
 
-func (s *Server) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) error {
 	taskID, err := parseTaskID(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
-	if err := s.taskService.Delete(r.Context(), TenantID(r.Context()), taskID); err != nil {
-		writeServiceError(w, r, err)
-		return
+	if err := s.taskService.Delete(r.Context(), tenantIDFrom(r.Context()), taskID); err != nil {
+		return err
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
 
-func (s *Server) applyToTask(w http.ResponseWriter, r *http.Request, operation taskOperation) {
+func (s *Server) applyToTask(w http.ResponseWriter, r *http.Request, operation taskOperation) error {
 	taskID, err := parseTaskID(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
-	task, err := operation(r.Context(), TenantID(r.Context()), taskID)
+	task, err := operation(r.Context(), tenantIDFrom(r.Context()), taskID)
 	if err != nil {
-		writeServiceError(w, r, err)
-		return
+		return err
 	}
 
 	writeTask(w, http.StatusOK, task)
+	return nil
 }

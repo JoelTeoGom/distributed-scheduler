@@ -11,6 +11,7 @@ import (
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/in/httpapi"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/out/cron"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/out/mysql"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/out/token"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/config"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/service"
 )
@@ -31,8 +32,13 @@ func main() {
 
 	taskRepository := mysql.NewTaskRepository(db)
 	taskService := service.NewTaskService(taskRepository, cron.NewCalculator(), time.Now)
+	tokens := token.NewJWT(config.JWTSecret)
 
-	server := httpapi.NewServer(config, taskService)
+	server := httpapi.NewServer(httpapi.Options{
+		Address:        config.ServerAddress,
+		ServiceName:    config.ServiceName,
+		ServiceVersion: config.ServiceVersion,
+	}, taskService, tokens)
 
 	serverErrors := make(chan error, 1)
 	go func() {

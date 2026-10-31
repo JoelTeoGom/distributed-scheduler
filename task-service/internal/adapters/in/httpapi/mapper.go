@@ -25,7 +25,7 @@ var priorityNames = map[domain.Priority]string{
 func parsePriority(name string) (domain.Priority, error) {
 	priority, known := priorityByName[name]
 	if !known {
-		return 0, fmt.Errorf("invalid priority %q: use critical, high, normal or low", name)
+		return 0, fmt.Errorf("%w: priority must be critical, high, normal or low", domain.ErrInvalidInput)
 	}
 	return priority, nil
 }
@@ -151,10 +151,10 @@ func toTaskPageResponse(page ports.TaskPage) TaskPageResponse {
 	return TaskPageResponse{Tasks: tasks, NextCursor: page.NextCursor}
 }
 
-func secondsToDuration(seconds int) time.Duration {
+func secondsToDuration(seconds uint32) time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func durationToSeconds(duration time.Duration) int {
-	return int(duration / time.Second)
+func durationToSeconds(duration time.Duration) uint32 {
+	return uint32(duration / time.Second)
 }

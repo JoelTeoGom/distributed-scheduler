@@ -11,6 +11,7 @@ var (
 	ErrVersionConflict     = errors.New("version conflict")
 	ErrIdempotencyMismatch = errors.New("idempotency key reused with a different body")
 	ErrInvalidInput        = errors.New("invalid input")
+	ErrUnauthorized        = errors.New("unauthorized")
 )
 
 func invalid(message string) error {
