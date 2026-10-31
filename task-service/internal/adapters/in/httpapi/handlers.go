@@ -38,14 +38,18 @@ func (s *Server) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := s.taskService.Create(r.Context(), TenantID(r.Context()), idempotency, input)
+	task, replayed, err := s.taskService.Create(r.Context(), TenantID(r.Context()), idempotency, input)
 	if err != nil {
 		writeServiceError(w, r, err)
 		return
 	}
 
+	status := http.StatusCreated
+	if replayed {
+		status = http.StatusOK
+	}
 	w.Header().Set("Location", "/tasks/"+task.ID.String())
-	writeTask(w, http.StatusCreated, task)
+	writeTask(w, status, task)
 }
 
 func (s *Server) listTasksHandler(w http.ResponseWriter, r *http.Request) {

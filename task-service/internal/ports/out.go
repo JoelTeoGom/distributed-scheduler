@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/domain"
 	"github.com/google/uuid"
@@ -17,4 +18,8 @@ type TaskRepository interface {
 	Update(ctx context.Context, task domain.Task, expectedVersion uint32) error
 	// Reschedule is Update plus next_run_at, for resumes and schedule changes.
 	Reschedule(ctx context.Context, task domain.Task, expectedVersion uint32) error
+}
+
+type NextRunCalculator interface {
+	Next(cronExpr, timezone string, after time.Time) (time.Time, error)
 }

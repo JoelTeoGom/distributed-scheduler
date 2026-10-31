@@ -10,7 +10,7 @@ import (
 )
 
 type TaskService interface {
-	Create(ctx context.Context, tenantID uuid.UUID, idempotency *IdempotencyKey, input CreateTaskInput) (domain.Task, error)
+	Create(ctx context.Context, tenantID uuid.UUID, idempotency *IdempotencyKey, input CreateTaskInput) (task domain.Task, replayed bool, err error)
 	Get(ctx context.Context, tenantID, taskID uuid.UUID) (domain.Task, error)
 	List(ctx context.Context, tenantID uuid.UUID, page PageRequest) (TaskPage, error)
 	Update(ctx context.Context, tenantID, taskID uuid.UUID, expectedVersion uint32, input UpdateTaskInput) (domain.Task, error)
