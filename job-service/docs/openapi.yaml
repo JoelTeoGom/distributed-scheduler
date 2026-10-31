@@ -87,10 +87,12 @@ paths:
       tags: [Jobs]
       operationId: retryJob
       summary: Retry a dead job by hand
-      description: Only `dead` jobs can be retried. The request has no body.
+      description: |
+        Only `dead` jobs can be retried. The request has no body. The job runs
+        later, so poll `GET /jobs/{id}` to follow it.
       responses:
-        "200":
-          $ref: "#/components/responses/JobOk"
+        "202":
+          description: The job was accepted for retry.
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":

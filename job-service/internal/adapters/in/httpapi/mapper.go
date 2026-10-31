@@ -14,7 +14,7 @@ var priorityNames = map[domain.Priority]string{
 	domain.PriorityLow:      "low",
 }
 
-func toJobResponse(job domain.Job) JobResponse {
+func toJobResponse(job *domain.Job) JobResponse {
 	return JobResponse{
 		ID:          job.ID.String(),
 		TaskID:      job.TaskID.String(),

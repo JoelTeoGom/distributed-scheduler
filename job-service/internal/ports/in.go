@@ -2,24 +2,33 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/job-service/internal/domain"
 	"github.com/google/uuid"
 )
 
 type JobService interface {
-	Get(ctx context.Context, tenantID, jobID uuid.UUID) (domain.Job, error)
-	ListByTask(ctx context.Context, tenantID, taskID uuid.UUID, page PageRequest) (JobPage, error)
-	ListDead(ctx context.Context, tenantID uuid.UUID, page PageRequest) (JobPage, error)
-	Retry(ctx context.Context, tenantID, jobID uuid.UUID) (domain.Job, error)
+	Get(ctx context.Context, tenantID, jobID uuid.UUID) (*domain.Job, error)
+	History(ctx context.Context, query HistoryQuery) (JobPage, error)
+	ListDead(ctx context.Context, query DeadQuery) (JobPage, error)
+	Retry(ctx context.Context, tenantID, jobID uuid.UUID) error
 }
 
-type PageRequest struct {
-	Cursor string
-	Limit  int
+type HistoryQuery struct {
+	TenantID uuid.UUID
+	TaskID   uuid.UUID
+	Before   *time.Time
+	Limit    int
+}
+
+type DeadQuery struct {
+	TenantID uuid.UUID
+	After    *uuid.UUID
+	Limit    int
 }
 
 type JobPage struct {
-	Jobs       []domain.Job
+	Jobs       []*domain.Job
 	NextCursor string
 }

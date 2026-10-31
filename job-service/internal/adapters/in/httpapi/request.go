@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -24,23 +25,58 @@ func parseID(r *http.Request) (uuid.UUID, error) {
 	return id, nil
 }
 
-func requireDeadStatus(r *http.Request) error {
+func parseDeadQuery(r *http.Request) (ports.DeadQuery, error) {
 	if r.URL.Query().Get("status") != string(domain.StatusDead) {
-		return fmt.Errorf("%w: status must be dead", domain.ErrInvalidInput)
+		return ports.DeadQuery{}, fmt.Errorf("%w: status must be dead", domain.ErrInvalidInput)
 	}
-	return nil
+
+	limit, err := parseLimit(r)
+	if err != nil {
+		return ports.DeadQuery{}, err
+	}
+
+	query := ports.DeadQuery{TenantID: tenantIDFrom(r.Context()), Limit: limit}
+	if cursor := r.URL.Query().Get("cursor"); cursor != "" {
+		after, err := uuid.Parse(cursor)
+		if err != nil {
+			return ports.DeadQuery{}, fmt.Errorf("%w: invalid cursor", domain.ErrInvalidInput)
+		}
+		query.After = &after
+	}
+	return query, nil
 }
 
-func parsePageRequest(r *http.Request) (ports.PageRequest, error) {
-	query := r.URL.Query()
-	page := ports.PageRequest{Cursor: query.Get("cursor"), Limit: defaultPageLimit}
-
-	if limitParameter := query.Get("limit"); limitParameter != "" {
-		limit, err := strconv.Atoi(limitParameter)
-		if err != nil || limit < 1 || limit > maxPageLimit {
-			return ports.PageRequest{}, fmt.Errorf("%w: limit must be between 1 and %d", domain.ErrInvalidInput, maxPageLimit)
-		}
-		page.Limit = limit
+func parseHistoryQuery(r *http.Request) (ports.HistoryQuery, error) {
+	taskID, err := parseID(r)
+	if err != nil {
+		return ports.HistoryQuery{}, err
 	}
-	return page, nil
+
+	limit, err := parseLimit(r)
+	if err != nil {
+		return ports.HistoryQuery{}, err
+	}
+
+	query := ports.HistoryQuery{TenantID: tenantIDFrom(r.Context()), TaskID: taskID, Limit: limit}
+	if cursor := r.URL.Query().Get("cursor"); cursor != "" {
+		before, err := time.Parse(time.RFC3339Nano, cursor)
+		if err != nil {
+			return ports.HistoryQuery{}, fmt.Errorf("%w: invalid cursor", domain.ErrInvalidInput)
+		}
+		query.Before = &before
+	}
+	return query, nil
+}
+
+func parseLimit(r *http.Request) (int, error) {
+	limitParameter := r.URL.Query().Get("limit")
+	if limitParameter == "" {
+		return defaultPageLimit, nil
+	}
+
+	limit, err := strconv.Atoi(limitParameter)
+	if err != nil || limit < 1 || limit > maxPageLimit {
+		return 0, fmt.Errorf("%w: limit must be between 1 and %d", domain.ErrInvalidInput, maxPageLimit)
+	}
+	return limit, nil
 }
