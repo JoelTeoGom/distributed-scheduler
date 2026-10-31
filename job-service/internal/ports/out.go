@@ -19,8 +19,8 @@ type HotJobRepository interface {
 
 // JobHistoryRepository is backed by Cassandra.
 type JobHistoryRepository interface {
-	Get(ctx context.Context, jobID uuid.UUID) (*domain.Job, error)
-	History(ctx context.Context, taskID uuid.UUID, before *time.Time, limit int) ([]*domain.Job, error)
+	Get(ctx context.Context, tenantID, jobID uuid.UUID) (*domain.Job, error)
+	History(ctx context.Context, tenantID, taskID uuid.UUID, before *time.Time, limit int) ([]*domain.Job, error)
 }
 
 type TokenVerifier interface {
