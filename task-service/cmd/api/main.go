@@ -5,10 +5,14 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
+	"time"
+	_ "time/tzdata"
 
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/in/httpapi"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/out/cron"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/out/mysql"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/config"
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/ports"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/service"
 )
 
 func main() {
@@ -20,7 +24,13 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	var taskService ports.TaskService
+	db, err := mysql.Open(ctx, config.DatabaseDSN)
+	if err != nil {
+		log.Fatalf("open database: %v", err)
+	}
+
+	taskRepository := mysql.NewTaskRepository(db)
+	taskService := service.NewTaskService(taskRepository, cron.NewCalculator(), time.Now)
 
 	server := httpapi.NewServer(config, taskService)
 
@@ -31,6 +41,7 @@ func main() {
 
 	select {
 	case err := <-serverErrors:
+		db.Close()
 		log.Fatalf("http server: %v", err)
 	case <-ctx.Done():
 	}
@@ -40,5 +51,9 @@ func main() {
 
 	if err := server.Shutdown(shutdownContext); err != nil {
 		log.Printf("shutdown http server: %v", err)
+	}
+
+	if err := db.Close(); err != nil {
+		log.Printf("close database: %v", err)
 	}
 }
