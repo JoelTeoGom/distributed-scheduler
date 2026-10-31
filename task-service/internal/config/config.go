@@ -31,8 +31,7 @@ type Config struct {
 	ShutdownGracePeriod time.Duration
 }
 
-// Load reads .env.local when it exists. Variables already set in the environment win,
-// so a deployed container needs no file.
+// Variables already set in the environment win over .env.local, so a container needs no file.
 func Load() (Config, error) {
 	if err := godotenv.Load(envFile); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return Config{}, fmt.Errorf("load %s: %w", envFile, err)
