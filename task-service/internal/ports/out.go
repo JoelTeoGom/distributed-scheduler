@@ -11,7 +11,7 @@ import (
 type TaskRepository interface {
 	Create(ctx context.Context, task domain.Task, idempotency *IdempotencyKey) error
 	GetByID(ctx context.Context, tenantID, taskID uuid.UUID) (domain.Task, error)
-	// GetByIdempotencyKey also finds deleted tasks, so a retried POST replays the original result.
+	// GetByIdempotencyKey also finds deleted tasks, so a retried POST gets the original task back.
 	GetByIdempotencyKey(ctx context.Context, tenantID uuid.UUID, key string) (domain.Task, IdempotencyKey, error)
 	List(ctx context.Context, tenantID uuid.UUID, page PageRequest) (TaskPage, error)
 	// Update never writes next_run_at, which the scheduler advances concurrently.

@@ -152,12 +152,12 @@ func atInput() ports.CreateTaskInput {
 
 func createTask(t *testing.T, f fixture, input ports.CreateTaskInput) domain.Task {
 	t.Helper()
-	task, replayed, err := f.service.Create(context.Background(), testTenant, nil, input)
+	task, alreadyCreated, err := f.service.Create(context.Background(), testTenant, nil, input)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	if replayed {
-		t.Fatal("a new task must not be a replay")
+	if alreadyCreated {
+		t.Fatal("a new task must not be reported as already created")
 	}
 	return task
 }
@@ -308,21 +308,21 @@ func TestCreatePropagatesCalculatorError(t *testing.T) {
 	}
 }
 
-func TestCreateReplaysTheSameRequest(t *testing.T) {
+func TestCreateReturnsTheExistingTaskForTheSameRequest(t *testing.T) {
 	f := newFixture()
 	ctx := context.Background()
 
-	first, replayed, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
-	if err != nil || replayed {
-		t.Fatalf("first: replayed=%v err=%v", replayed, err)
+	first, alreadyCreated, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
+	if err != nil || alreadyCreated {
+		t.Fatalf("first: alreadyCreated=%v err=%v", alreadyCreated, err)
 	}
 
-	second, replayed, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
-	if err != nil || !replayed {
-		t.Fatalf("second: replayed=%v err=%v", replayed, err)
+	second, alreadyCreated, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
+	if err != nil || !alreadyCreated {
+		t.Fatalf("second: alreadyCreated=%v err=%v", alreadyCreated, err)
 	}
 	if second.ID != first.ID || len(f.repository.tasks) != 1 {
-		t.Errorf("replay created a new task: %v vs %v", second.ID, first.ID)
+		t.Errorf("the retry created a new task: %v vs %v", second.ID, first.ID)
 	}
 }
 
@@ -333,14 +333,14 @@ func TestCreateRejectsAKeyReusedWithAnotherBody(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, replayed, err := f.service.Create(ctx, testTenant, idempotencyKey("another body"), cronInput())
+	_, alreadyCreated, err := f.service.Create(ctx, testTenant, idempotencyKey("another body"), cronInput())
 
-	if !errors.Is(err, domain.ErrIdempotencyMismatch) || replayed {
-		t.Errorf("replayed=%v err=%v", replayed, err)
+	if !errors.Is(err, domain.ErrIdempotencyMismatch) || alreadyCreated {
+		t.Errorf("alreadyCreated=%v err=%v", alreadyCreated, err)
 	}
 }
 
-func TestCreateReplaysAnAtTaskWhoseDateHasPassed(t *testing.T) {
+func TestCreateReturnsAnExistingAtTaskWhoseDateHasPassed(t *testing.T) {
 	f := newFixture()
 	ctx := context.Background()
 	first, _, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), atInput())
@@ -349,22 +349,22 @@ func TestCreateReplaysAnAtTaskWhoseDateHasPassed(t *testing.T) {
 	}
 
 	*f.now = testNow.Add(48 * time.Hour)
-	second, replayed, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), atInput())
+	second, alreadyCreated, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), atInput())
 
-	if err != nil || !replayed || second.ID != first.ID {
-		t.Errorf("replayed=%v err=%v", replayed, err)
+	if err != nil || !alreadyCreated || second.ID != first.ID {
+		t.Errorf("alreadyCreated=%v err=%v", alreadyCreated, err)
 	}
 }
 
-func TestCreateReplaysWhenAConcurrentRequestWinsTheInsert(t *testing.T) {
+func TestCreateReturnsTheWinnerWhenAConcurrentRequestWinsTheInsert(t *testing.T) {
 	f := newFixture()
 	winner := createTask(t, newFixture(), cronInput())
 	f.repository.raceOnIdempotency = &winner
 
-	task, replayed, err := f.service.Create(context.Background(), testTenant, idempotencyKey("body"), cronInput())
+	task, alreadyCreated, err := f.service.Create(context.Background(), testTenant, idempotencyKey("body"), cronInput())
 
-	if err != nil || !replayed || task.ID != winner.ID {
-		t.Errorf("replayed=%v err=%v id=%v", replayed, err, task.ID)
+	if err != nil || !alreadyCreated || task.ID != winner.ID {
+		t.Errorf("alreadyCreated=%v err=%v id=%v", alreadyCreated, err, task.ID)
 	}
 }
 
@@ -589,7 +589,7 @@ func TestDeleteHidesTheTask(t *testing.T) {
 	}
 }
 
-func TestCreateReplaysADeletedTask(t *testing.T) {
+func TestCreateReturnsAnExistingDeletedTask(t *testing.T) {
 	f := newFixture()
 	ctx := context.Background()
 	first, _, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
@@ -600,10 +600,10 @@ func TestCreateReplaysADeletedTask(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	replayedTask, replayed, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
+	existingTask, alreadyCreated, err := f.service.Create(ctx, testTenant, idempotencyKey("body"), cronInput())
 
-	if err != nil || !replayed || replayedTask.Status != domain.StatusDeleted {
-		t.Errorf("replayed=%v err=%v status=%s", replayed, err, replayedTask.Status)
+	if err != nil || !alreadyCreated || existingTask.Status != domain.StatusDeleted {
+		t.Errorf("alreadyCreated=%v err=%v status=%s", alreadyCreated, err, existingTask.Status)
 	}
 }
 

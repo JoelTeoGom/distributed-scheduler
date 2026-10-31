@@ -347,9 +347,9 @@ func TestIdempotency(t *testing.T) {
 
 	first := decode[taskResponse](t, api.send(http.StatusCreated, http.MethodPost, "/tasks", cronPayload(), key))
 
-	replay := decode[taskResponse](t, api.send(http.StatusOK, http.MethodPost, "/tasks", cronPayload(), key))
-	if replay.ID != first.ID {
-		t.Errorf("replay created another task: %s vs %s", replay.ID, first.ID)
+	existing := decode[taskResponse](t, api.send(http.StatusOK, http.MethodPost, "/tasks", cronPayload(), key))
+	if existing.ID != first.ID {
+		t.Errorf("the retry created another task: %s vs %s", existing.ID, first.ID)
 	}
 
 	other := cronPayload()
@@ -362,7 +362,7 @@ func TestIdempotency(t *testing.T) {
 	api.send(http.StatusNoContent, http.MethodDelete, taskPath(first.ID), nil, nil)
 	deleted := decode[taskResponse](t, api.send(http.StatusOK, http.MethodPost, "/tasks", cronPayload(), key))
 	if deleted.ID != first.ID || deleted.Status != "deleted" {
-		t.Errorf("replay of a deleted task: %+v", deleted)
+		t.Errorf("retry of a deleted task: %+v", deleted)
 	}
 
 	api.send(http.StatusBadRequest, http.MethodPost, "/tasks", cronPayload(), map[string]string{"Idempotency-Key": "clé"})

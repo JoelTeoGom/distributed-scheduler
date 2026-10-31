@@ -35,13 +35,13 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	task, replayed, err := s.taskService.Create(r.Context(), tenantIDFrom(r.Context()), idempotency, input)
+	task, alreadyCreated, err := s.taskService.Create(r.Context(), tenantIDFrom(r.Context()), idempotency, input)
 	if err != nil {
 		return err
 	}
 
 	status := http.StatusCreated
-	if replayed {
+	if alreadyCreated {
 		status = http.StatusOK
 	}
 	w.Header().Set("Location", "/tasks/"+task.ID.String())

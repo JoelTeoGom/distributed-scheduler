@@ -25,9 +25,9 @@ func NewTaskService(tasks ports.TaskRepository, nextRuns ports.NextRunCalculator
 }
 
 func (s *TaskService) Create(ctx context.Context, tenantID uuid.UUID, idempotency *ports.IdempotencyKey, input ports.CreateTaskInput) (domain.Task, bool, error) {
-	// A retry must replay even if the task would no longer validate, such as an expired run_at.
+	// A retry must get its task back even if it would no longer validate, such as an expired run_at.
 	if idempotency != nil {
-		task, err := s.replay(ctx, tenantID, idempotency)
+		task, err := s.getTaskByIdempotencyKey(ctx, tenantID, idempotency)
 		if !errors.Is(err, domain.ErrNotFound) {
 			return task, err == nil, err
 		}
@@ -60,7 +60,7 @@ func (s *TaskService) Create(ctx context.Context, tenantID uuid.UUID, idempotenc
 
 	err = s.tasks.Create(ctx, task, idempotency)
 	if errors.Is(err, domain.ErrDuplicateKey) && idempotency != nil {
-		task, err := s.replay(ctx, tenantID, idempotency)
+		task, err := s.getTaskByIdempotencyKey(ctx, tenantID, idempotency)
 		return task, err == nil, err
 	}
 	if err != nil {
@@ -149,7 +149,7 @@ func (s *TaskService) Delete(ctx context.Context, tenantID, taskID uuid.UUID) er
 	return s.tasks.Update(ctx, task, task.Version)
 }
 
-func (s *TaskService) replay(ctx context.Context, tenantID uuid.UUID, idempotency *ports.IdempotencyKey) (domain.Task, error) {
+func (s *TaskService) getTaskByIdempotencyKey(ctx context.Context, tenantID uuid.UUID, idempotency *ports.IdempotencyKey) (domain.Task, error) {
 	task, stored, err := s.tasks.GetByIdempotencyKey(ctx, tenantID, idempotency.Key)
 	if err != nil {
 		return domain.Task{}, err
