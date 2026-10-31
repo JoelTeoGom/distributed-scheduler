@@ -14,6 +14,8 @@ func writeError(w http.ResponseWriter, status int, message string) {
 
 func writeServiceError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
+	case errors.Is(err, domain.ErrInvalidInput):
+		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, domain.ErrNotFound):
 		writeError(w, http.StatusNotFound, err.Error())
 	case errors.Is(err, domain.ErrVersionConflict), errors.Is(err, domain.ErrDuplicateKey):
