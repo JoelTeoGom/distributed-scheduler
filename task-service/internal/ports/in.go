@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"crypto/sha256"
 	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/domain"
@@ -35,4 +36,19 @@ type UpdateTaskInput struct {
 	Request  *domain.Request
 	Timeout  *time.Duration
 	Retry    *domain.RetryPolicy
+}
+
+type IdempotencyKey struct {
+	Key         string
+	RequestHash [sha256.Size]byte
+}
+
+type PageRequest struct {
+	Cursor string
+	Limit  int
+}
+
+type TaskPage struct {
+	Tasks      []domain.Task
+	NextCursor string
 }

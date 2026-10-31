@@ -1,11 +1,11 @@
-package httpserver
+package httpapi
 
 import (
 	"context"
 	"net/http"
 	"time"
 
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapter/config"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/config"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/ports"
 )
 
@@ -47,4 +47,25 @@ func (s *Server) Start() error {
 // Shutdown stops accepting connections and waits for in-flight requests until ctx expires.
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
+}
+
+func (s *Server) routes(jwtSecret []byte) http.Handler {
+	mux := http.NewServeMux()
+	authenticate := Authenticate(jwtSecret)
+
+	handleAuthenticated := func(pattern string, handler http.HandlerFunc) {
+		mux.Handle(pattern, authenticate(handler))
+	}
+
+	mux.HandleFunc("GET /health", s.healthHandler)
+
+	handleAuthenticated("POST /tasks", s.createTaskHandler)
+	handleAuthenticated("GET /tasks", s.listTasksHandler)
+	handleAuthenticated("GET /tasks/{id}", s.getTaskHandler)
+	handleAuthenticated("PATCH /tasks/{id}", s.updateTaskHandler)
+	handleAuthenticated("POST /tasks/{id}/pause", s.pauseTaskHandler)
+	handleAuthenticated("POST /tasks/{id}/resume", s.resumeTaskHandler)
+	handleAuthenticated("DELETE /tasks/{id}", s.deleteTaskHandler)
+
+	return mux
 }

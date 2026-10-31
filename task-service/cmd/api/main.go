@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapter/config"
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapter/httpserver"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/in/httpapi"
+	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/config"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/ports"
 )
 
@@ -22,7 +22,7 @@ func main() {
 
 	var taskService ports.TaskService
 
-	server := httpserver.NewServer(config, taskService)
+	server := httpapi.NewServer(config, taskService)
 
 	serverErrors := make(chan error, 1)
 	go func() {

@@ -1,13 +1,11 @@
-package httpserver
+package httpapi
 
 import (
 	"context"
 	"errors"
 	"net/http"
 
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapter/httpserver/middleware"
 	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/domain"
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/ports"
 	"github.com/google/uuid"
 )
 
@@ -40,7 +38,7 @@ func (s *Server) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := s.taskService.Create(r.Context(), middleware.TenantID(r.Context()), idempotency, input)
+	task, err := s.taskService.Create(r.Context(), TenantID(r.Context()), idempotency, input)
 	if err != nil {
 		writeServiceError(w, r, err)
 		return
@@ -57,7 +55,7 @@ func (s *Server) listTasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskPage, err := s.taskService.List(r.Context(), middleware.TenantID(r.Context()), page)
+	taskPage, err := s.taskService.List(r.Context(), TenantID(r.Context()), page)
 	if err != nil {
 		writeServiceError(w, r, err)
 		return
@@ -99,8 +97,8 @@ func (s *Server) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := s.taskService.Update(r.Context(), middleware.TenantID(r.Context()), taskID, expectedVersion, input)
-	if errors.Is(err, ports.ErrVersionConflict) {
+	task, err := s.taskService.Update(r.Context(), TenantID(r.Context()), taskID, expectedVersion, input)
+	if errors.Is(err, domain.ErrVersionConflict) {
 		writeError(w, http.StatusPreconditionFailed, err.Error())
 		return
 	}
@@ -127,7 +125,7 @@ func (s *Server) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.taskService.Delete(r.Context(), middleware.TenantID(r.Context()), taskID); err != nil {
+	if err := s.taskService.Delete(r.Context(), TenantID(r.Context()), taskID); err != nil {
 		writeServiceError(w, r, err)
 		return
 	}
@@ -142,7 +140,7 @@ func (s *Server) applyToTask(w http.ResponseWriter, r *http.Request, operation t
 		return
 	}
 
-	task, err := operation(r.Context(), middleware.TenantID(r.Context()), taskID)
+	task, err := operation(r.Context(), TenantID(r.Context()), taskID)
 	if err != nil {
 		writeServiceError(w, r, err)
 		return
