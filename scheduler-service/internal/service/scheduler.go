@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/ports"
@@ -28,8 +29,9 @@ func (s *SchedulerService) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-scheduleJobsTicker.C:
+			// A database outage must not stop the scheduler: the next tick retries and the pool reconnects.
 			if err := s.db.ScheduleJobs(ctx, time.Now(), s.nextRuns); err != nil {
-				return err
+				slog.ErrorContext(ctx, "schedule jobs", "error", err)
 			}
 		}
 	}
