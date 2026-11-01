@@ -6,12 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/cron"
 	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql"
 	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/config"
+	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/service"
 )
 
 func main() {
-
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -26,8 +27,21 @@ func main() {
 	}
 
 	schedulerRepository := mysql.NewSchedulerRepository(db)
+	cron := cron.NewCalculator()
 
-	<-ctx.Done()
+	schedulerService := service.NewSchedulerService(schedulerRepository, cron)
+
+	schedulerErrors := make(chan error, 1)
+	go func() {
+		schedulerErrors <- schedulerService.Start(ctx)
+	}()
+
+	select {
+	case err := <-schedulerErrors:
+		db.Close()
+		log.Fatalf("scheduler service: %v", err)
+	case <-ctx.Done():
+	}
 
 	if err := db.Close(); err != nil {
 		log.Printf("close database: %v", err)
