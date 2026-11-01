@@ -15,26 +15,13 @@ var priorityNames = map[domain.Priority]string{
 }
 
 func toJobResponse(job *domain.Job) JobResponse {
-	return JobResponse{
+	response := JobResponse{
 		ID:          job.ID.String(),
 		TaskID:      job.TaskID.String(),
 		ScheduledAt: job.ScheduledAt,
 		Priority:    priorityNames[job.Config.Priority],
-		Request: HTTPRequestDTO{
-			Method:    job.Config.Request.Method,
-			URL:       job.Config.Request.URL,
-			Headers:   job.Config.Request.Headers,
-			Body:      string(job.Config.Request.Body),
-			SecretRef: job.Config.Request.SecretRef,
-		},
-		TimeoutSeconds: durationToSeconds(job.Config.Timeout),
-		Retry: RetryDTO{
-			MaxAttempts:        job.Config.Retry.MaxAttempts,
-			BackoffBaseSeconds: durationToSeconds(job.Config.Retry.BackoffBase),
-		},
-		Status:        string(job.Status),
-		Attempt:       job.Attempt,
-		NextAttemptAt: job.NextAttemptAt,
+		Status:      string(job.Status),
+		Attempt:     job.Attempt,
 		Result: ResultDTO{
 			StartedAt:    job.Result.StartedAt,
 			FinishedAt:   job.Result.FinishedAt,
@@ -42,9 +29,30 @@ func toJobResponse(job *domain.Job) JobResponse {
 			Error:        job.Result.Error,
 			ResponseBody: string(job.Result.ResponseBody),
 		},
-		CreatedAt: job.CreatedAt,
-		UpdatedAt: job.UpdatedAt,
 	}
+
+	// Archived jobs have a reduced view: Cassandra does not store their config.
+	if job.Config.Request.Method == "" {
+		return response
+	}
+
+	timeoutSeconds := durationToSeconds(job.Config.Timeout)
+	response.Request = &HTTPRequestDTO{
+		Method:    job.Config.Request.Method,
+		URL:       job.Config.Request.URL,
+		Headers:   job.Config.Request.Headers,
+		Body:      string(job.Config.Request.Body),
+		SecretRef: job.Config.Request.SecretRef,
+	}
+	response.TimeoutSeconds = &timeoutSeconds
+	response.Retry = &RetryDTO{
+		MaxAttempts:        job.Config.Retry.MaxAttempts,
+		BackoffBaseSeconds: durationToSeconds(job.Config.Retry.BackoffBase),
+	}
+	response.NextAttemptAt = &job.NextAttemptAt
+	response.CreatedAt = &job.CreatedAt
+	response.UpdatedAt = &job.UpdatedAt
+	return response
 }
 
 func toJobPageResponse(page ports.JobPage) JobPageResponse {

@@ -88,7 +88,7 @@ paths:
       operationId: retryJob
       summary: Retry a dead job by hand
       description: |
-        Only `dead` jobs can be retried. The request has no body. The job runs
+        Only `dead` jobs still in the DLQ can be retried. The request has no body. The job runs
         later, so poll `GET /jobs/{id}` to follow it.
       responses:
         "202":
@@ -263,20 +263,17 @@ components:
           description: Truncated by the executor.
     Job:
       type: object
+      description: |
+        Archived jobs have a reduced view: `request`, `timeout_seconds`, `retry`,
+        `next_attempt_at`, `created_at` and `updated_at` are absent.
       required:
         - id
         - task_id
         - scheduled_at
         - priority
-        - request
-        - timeout_seconds
-        - retry
         - status
         - attempt
-        - next_attempt_at
         - result
-        - created_at
-        - updated_at
       properties:
         id:
           type: string

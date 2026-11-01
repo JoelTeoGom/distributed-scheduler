@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS job_history (
     bucket        int,        -- month of scheduled_at, e.g. 202610
     scheduled_at  timestamp,
     job_id        uuid,
-    status        text,       -- always succeeded: dead jobs stay in MySQL
-    attempt       tinyint,
+    status        text,       -- succeeded | dead
+    attempt       smallint,   -- max_attempts goes up to 255, above the tinyint range
     priority      tinyint,
     http_status   smallint,
     error         text,

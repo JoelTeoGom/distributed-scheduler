@@ -1,6 +1,6 @@
 -- Jobs: one execution of a task. This hot table is also the queue:
 -- executors claim rows with SELECT ... FOR UPDATE SKIP LOCKED.
--- Terminal jobs (except dead) are moved to Cassandra by the archiver.
+-- Terminal jobs are moved to Cassandra by the archiver, dead ones after the DLQ retention window.
 -- All DATETIME values are stored in UTC.
 
 CREATE TABLE jobs (
