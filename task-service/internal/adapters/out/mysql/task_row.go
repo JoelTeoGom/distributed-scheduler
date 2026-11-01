@@ -114,3 +114,13 @@ func nullableTimePointer(value *time.Time) sql.NullTime {
 	}
 	return sql.NullTime{Time: *value, Valid: true}
 }
+
+func taskColumns() string {
+	return `id, tenant_id, name,
+	schedule_type, run_at, cron_expr, timezone,
+	priority,
+	http_method, endpoint, headers, body, secret_ref, timeout_seconds,
+	max_attempts, backoff_base_seconds,
+	status, next_run_at,
+	version, created_at, updated_at`
+}

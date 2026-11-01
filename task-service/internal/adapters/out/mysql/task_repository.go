@@ -15,14 +15,6 @@ import (
 
 const errDuplicateEntry = 1062
 
-const taskColumns = `id, tenant_id, name,
-	schedule_type, run_at, cron_expr, timezone,
-	priority,
-	http_method, endpoint, headers, body, secret_ref, timeout_seconds,
-	max_attempts, backoff_base_seconds,
-	status, next_run_at,
-	version, created_at, updated_at`
-
 type TaskRepository struct {
 	db *sql.DB
 }
@@ -79,7 +71,7 @@ func (r *TaskRepository) Create(ctx context.Context, task domain.Task, idempoten
 
 func (r *TaskRepository) GetByID(ctx context.Context, tenantID, taskID uuid.UUID) (domain.Task, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT `+taskColumns+`
+		SELECT `+taskColumns()+`
 		FROM tasks
 		WHERE id = ? AND tenant_id = ? AND status <> 'deleted'`,
 		taskID[:], tenantID[:])
@@ -93,7 +85,7 @@ func (r *TaskRepository) GetByID(ctx context.Context, tenantID, taskID uuid.UUID
 
 func (r *TaskRepository) GetByIdempotencyKey(ctx context.Context, tenantID uuid.UUID, key string) (domain.Task, ports.IdempotencyKey, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT `+taskColumns+`, request_hash
+		SELECT `+taskColumns()+`, request_hash
 		FROM tasks
 		WHERE tenant_id = ? AND idempotency_key = ?`,
 		tenantID[:], key)
@@ -112,7 +104,7 @@ func (r *TaskRepository) GetByIdempotencyKey(ctx context.Context, tenantID uuid.
 func (r *TaskRepository) List(ctx context.Context, tenantID uuid.UUID, page ports.PageRequest) (ports.TaskPage, error) {
 	// Without the hint MySQL picks uq_tasks_idempotency and sorts every task of the tenant.
 	query := `
-		SELECT ` + taskColumns + `
+		SELECT ` + taskColumns() + `
 		FROM tasks FORCE INDEX (idx_tasks_tenant)
 		WHERE tenant_id = ? AND status <> 'deleted'
 		ORDER BY id
@@ -125,7 +117,7 @@ func (r *TaskRepository) List(ctx context.Context, tenantID uuid.UUID, page port
 			return ports.TaskPage{}, fmt.Errorf("%w: invalid cursor", domain.ErrInvalidInput)
 		}
 		query = `
-			SELECT ` + taskColumns + `
+			SELECT ` + taskColumns() + `
 			FROM tasks FORCE INDEX (idx_tasks_tenant)
 			WHERE tenant_id = ? AND id > ? AND status <> 'deleted'
 			ORDER BY id

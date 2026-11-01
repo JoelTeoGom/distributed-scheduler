@@ -1,0 +1,342 @@
+openapi: 3.0.3
+info:
+  title: Job Service API
+  version: 1.0.0
+  description: |
+    Reads the executions of tasks. A task is the configuration; each execution
+    is a job. This API serves job status, the execution history of a task and
+    the dead letter queue (DLQ), and retries dead jobs by hand. Tasks themselves
+    are managed by the Task Service.
+
+    **Tenancy.** The tenant comes from the JWT, never from the request. A job
+    of another tenant behaves as if it did not exist (`404`).
+
+    **Timestamps.** Always UTC, in RFC 3339 format.
+
+    **Job lifecycle.** `pending` → `running` → `succeeded`. A failed attempt goes
+    back to `pending` to be retried, or to `dead` when retries are exhausted.
+    There is no `failed` status.
+servers:
+  - url: http://localhost:8081
+    description: Local
+tags:
+  - name: Jobs
+  - name: Health
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      summary: Check that the service is up
+      security: []
+      responses:
+        "200":
+          description: The service is up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /jobs:
+    get:
+      tags: [Jobs]
+      operationId: listDeadJobs
+      summary: List the dead jobs of the tenant (DLQ inbox)
+      description: Jobs that exhausted their retries. `dead` is the only status accepted.
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [dead]
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          $ref: "#/components/responses/JobPageOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /jobs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Jobs]
+      operationId: getJob
+      summary: Get the status of a job
+      responses:
+        "200":
+          $ref: "#/components/responses/JobOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /jobs/{id}/retry:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Jobs]
+      operationId: retryJob
+      summary: Retry a dead job by hand
+      description: |
+        Only `dead` jobs still in the DLQ can be retried. The request has no body. The job runs
+        later, so poll `GET /jobs/{id}` to follow it.
+      responses:
+        "202":
+          description: The job was accepted for retry.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The job is not dead.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: only dead jobs can be retried
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /tasks/{id}/jobs:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Jobs]
+      operationId: listTaskJobs
+      summary: Get the execution history of a task
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          $ref: "#/components/responses/JobPageOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256 token with the claims `tenant_id` (UUID) and `exp`, both required.
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Cursor:
+      name: cursor
+      in: query
+      description: The `next_cursor` of the previous page. Opaque, send it back unchanged.
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+  responses:
+    JobOk:
+      description: The job.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Job"
+    JobPageOk:
+      description: One page of jobs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JobPage"
+    BadRequest:
+      description: Invalid id or query parameter. `error` says what to fix.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "invalid input: status must be dead"
+    Unauthorized:
+      description: Missing, invalid or expired token.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+          example: Bearer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: unauthorized
+    NotFound:
+      description: The job does not exist or belongs to another tenant.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: job not found
+    InternalError:
+      description: Unexpected failure. The details stay in the server logs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: internal server error
+  schemas:
+    Priority:
+      type: string
+      enum: [critical, high, normal, low]
+    Status:
+      type: string
+      enum: [pending, running, succeeded, dead]
+    HttpRequest:
+      type: object
+      description: The HTTP call the job makes, copied from the task when the job was created.
+      required: [method, url]
+      properties:
+        method:
+          type: string
+        url:
+          type: string
+          format: uri
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          type: string
+        secret_ref:
+          type: string
+          description: Reference to a secret, never the secret itself.
+    RetryPolicy:
+      type: object
+      required: [max_attempts, backoff_base_seconds]
+      properties:
+        max_attempts:
+          type: integer
+        backoff_base_seconds:
+          type: integer
+          description: "Delay before retry n: `backoff_base_seconds * 2^(n-1)`."
+    Result:
+      type: object
+      description: Outcome of the last attempt. Empty until the job has run.
+      properties:
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        http_status:
+          type: integer
+          description: Status returned by the endpoint.
+        error:
+          type: string
+          description: Such as a timeout, an expired lease or a connection error.
+        response_body:
+          type: string
+          description: Truncated by the executor.
+    Job:
+      type: object
+      description: |
+        Archived jobs have a reduced view: `request`, `timeout_seconds`, `retry`,
+        `next_attempt_at`, `created_at` and `updated_at` are absent.
+      required:
+        - id
+        - task_id
+        - scheduled_at
+        - priority
+        - status
+        - attempt
+        - result
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Also the `Idempotency-Key` sent to the endpoint.
+        task_id:
+          type: string
+          format: uuid
+        scheduled_at:
+          type: string
+          format: date-time
+          description: The time the job was meant to fire.
+        priority:
+          $ref: "#/components/schemas/Priority"
+        request:
+          $ref: "#/components/schemas/HttpRequest"
+        timeout_seconds:
+          type: integer
+        retry:
+          $ref: "#/components/schemas/RetryPolicy"
+        status:
+          $ref: "#/components/schemas/Status"
+        attempt:
+          type: integer
+          description: Number of attempts claimed so far.
+        next_attempt_at:
+          type: string
+          format: date-time
+        result:
+          $ref: "#/components/schemas/Result"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    JobPage:
+      type: object
+      required: [jobs]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        next_cursor:
+          type: string
+          description: Absent on the last page.
+    Health:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: job-service
+        version:
+          type: string
+          example: dev
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
