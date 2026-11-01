@@ -28,7 +28,7 @@ func (s *SchedulerService) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-scheduleJobsTicker.C:
-			if err := s.db.ScheduleJobs(ctx, s.clock()); err != nil {
+			if err := s.db.ScheduleJobs(ctx, s.clock(), s.nextRuns); err != nil {
 				return err
 			}
 		}

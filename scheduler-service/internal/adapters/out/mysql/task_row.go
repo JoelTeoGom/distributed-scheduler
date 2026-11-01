@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/domain"
+	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/domain"
 )
 
 type rowScanner interface {
@@ -56,30 +56,6 @@ func scanTask(scanner rowScanner, extraDestinations ...any) (domain.Task, error)
 	return task, nil
 }
 
-func taskConfigurationValues(task domain.Task) ([]any, error) {
-	headers, err := encodeHeaders(task.Request.Headers)
-	if err != nil {
-		return nil, err
-	}
-
-	return []any{
-		task.Name,
-		task.Schedule.Type,
-		nullableTime(task.Schedule.RunAt),
-		nullableString(task.Schedule.CronExpr),
-		task.Schedule.Timezone,
-		task.Priority,
-		task.Request.Method,
-		task.Request.URL,
-		headers,
-		nullableBytes(task.Request.Body),
-		nullableString(task.Request.SecretRef),
-		int64(task.Timeout / time.Second),
-		task.Retry.MaxAttempts,
-		int64(task.Retry.BackoffBase / time.Second),
-	}, nil
-}
-
 // Headers travel as a string: MySQL rejects binary parameters for JSON columns.
 func encodeHeaders(headers map[string]string) (sql.NullString, error) {
 	if len(headers) == 0 {
@@ -102,17 +78,6 @@ func nullableBytes(value []byte) []byte {
 		return nil
 	}
 	return value
-}
-
-func nullableTime(value time.Time) sql.NullTime {
-	return sql.NullTime{Time: value, Valid: !value.IsZero()}
-}
-
-func nullableTimePointer(value *time.Time) sql.NullTime {
-	if value == nil {
-		return sql.NullTime{}
-	}
-	return sql.NullTime{Time: *value, Valid: true}
 }
 
 func taskColumns() string {

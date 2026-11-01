@@ -10,7 +10,7 @@ type NextRunCalculator interface {
 }
 
 type SchedulerRepository interface {
-	ScheduleJobs(ctx context.Context, now time.Time) error
+	ScheduleJobs(ctx context.Context, now time.Time, nextRuns NextRunCalculator) error
 }
 
 type SchedulerService interface {

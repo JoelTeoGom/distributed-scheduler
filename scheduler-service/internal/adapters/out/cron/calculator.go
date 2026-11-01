@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/domain"
 	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/ports"
 	cronlib "github.com/robfig/cron/v3"
 )

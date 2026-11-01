@@ -25,6 +25,8 @@ func main() {
 		log.Fatalf("open database: %v", err)
 	}
 
+	schedulerRepository := mysql.NewSchedulerRepository(db)
+
 	<-ctx.Done()
 
 	if err := db.Close(); err != nil {

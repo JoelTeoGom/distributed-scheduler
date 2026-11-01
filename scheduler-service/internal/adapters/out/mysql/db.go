@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	maxOpenConnections = 20
-	maxIdleConnections = 10
+	maxOpenConnections = 5
+	maxIdleConnections = 5
 	connectionLifetime = 5 * time.Minute
 	pingTimeout        = 5 * time.Second
 )

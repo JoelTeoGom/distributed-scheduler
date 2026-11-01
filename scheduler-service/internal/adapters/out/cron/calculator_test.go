@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/adapters/out/cron"
-	"github.com/JoelTeoGom/distributed-scheduler/task-service/internal/domain"
+	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/cron"
+	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/domain"
 )
 
 func TestNextUsesTheTaskTimezone(t *testing.T) {
