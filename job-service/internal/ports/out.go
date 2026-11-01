@@ -13,7 +13,7 @@ type HotJobRepository interface {
 	Get(ctx context.Context, tenantID, jobID uuid.UUID) (*domain.Job, error)
 	History(ctx context.Context, tenantID, taskID uuid.UUID, before *time.Time, limit int) ([]*domain.Job, error)
 	ListDead(ctx context.Context, tenantID uuid.UUID, after *uuid.UUID, limit int) ([]*domain.Job, error)
-	// Retry affects 0 rows when the job is not dead or does not exist.
+	// Retry returns domain.ErrNotRetryable when it affects 0 rows: the job is not dead or does not exist.
 	Retry(ctx context.Context, tenantID, jobID uuid.UUID, now time.Time) error
 }
 
