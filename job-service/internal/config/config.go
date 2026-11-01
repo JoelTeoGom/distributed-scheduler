@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -18,6 +19,8 @@ const (
 	defaultServiceVersion      = "dev"
 	defaultServerAddress       = ":8081"
 	defaultShutdownGracePeriod = "30s"
+	defaultCassandraHosts      = "127.0.0.1"
+	defaultCassandraKeyspace   = "scheduler"
 
 	minJWTSecretLength = 32
 )
@@ -27,6 +30,8 @@ type Config struct {
 	ServiceVersion      string
 	ServerAddress       string
 	DatabaseDSN         string
+	CassandraHosts      []string
+	CassandraKeyspace   string
 	JWTSecret           string
 	ShutdownGracePeriod time.Duration
 }
@@ -47,6 +52,8 @@ func Load() (Config, error) {
 		ServiceVersion:      getEnvOrDefault("SERVICE_VERSION", defaultServiceVersion),
 		ServerAddress:       getEnvOrDefault("SERVER_ADDRESS", defaultServerAddress),
 		DatabaseDSN:         os.Getenv("DATABASE_DSN"),
+		CassandraHosts:      strings.Split(getEnvOrDefault("CASSANDRA_HOSTS", defaultCassandraHosts), ","),
+		CassandraKeyspace:   getEnvOrDefault("CASSANDRA_KEYSPACE", defaultCassandraKeyspace),
 		JWTSecret:           os.Getenv("JWT_SECRET"),
 		ShutdownGracePeriod: shutdownGracePeriod,
 	}
