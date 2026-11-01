@@ -40,6 +40,7 @@ func (r *SchedulerRepository) ScheduleJobs(ctx context.Context, now time.Time, n
 		return nil
 	}
 
+	//I have decided that it is not worth parallelizing: each calculation takes microseconds, close to the cost of starting a goroutine.
 	nextRunTimes := make([]sql.NullTime, len(tasks))
 	for i, task := range tasks {
 		nextRunTimes[i], err = nextRunAfterFiring(task, nextRuns)
