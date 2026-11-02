@@ -7,7 +7,7 @@ import (
 )
 
 type JobRepository interface {
-	ObtainJobs(ctx context.Context, timeLimit, jobLimit int) ([]*domain.Job, error)
+	ClaimJobs(ctx context.Context, timeLimit, jobLimit int) ([]*domain.Job, error)
 }
 
 // RequestExecutor sends the job request. Endpoint failures go in the Result, not in an error.

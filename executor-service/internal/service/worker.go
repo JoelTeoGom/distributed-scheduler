@@ -49,7 +49,7 @@ func (s *WorkerService) StartWorkerPool(ctx context.Context, workerCount int) er
 			if availableWorkers <= 0 {
 				continue
 			}
-			jobs, err := s.db.ObtainJobs(ctx, s.timeLimit, availableWorkers)
+			jobs, err := s.db.ClaimJobs(ctx, s.timeLimit, availableWorkers)
 			if err != nil {
 				return err
 			}
