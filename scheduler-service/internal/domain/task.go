@@ -25,3 +25,22 @@ type Task struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type ScheduleType string
+
+const ScheduleAt ScheduleType = "at"
+
+type Schedule struct {
+	Type     ScheduleType
+	RunAt    time.Time
+	CronExpr string
+	Timezone string // IANA name, e.g. "Europe/Madrid"
+}
+
+// Priority is numeric so the jobs table can ORDER BY it: lower = more urgent.
+type Priority uint8
+
+type RetryPolicy struct {
+	MaxAttempts int
+	BackoffBase time.Duration // delay before retry n = BackoffBase * 2^(n-1)
+}
