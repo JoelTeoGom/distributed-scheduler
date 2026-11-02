@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	maxNameLength = 255
-	maxTimeout    = time.Hour
+	maxNameLength    = 255
+	maxTimeout       = time.Hour
+	maxAttemptsLimit = 255
+	maxBackoffBase   = 24 * time.Hour
 )
 
 // Status is the lifecycle of the task, not the execution status (that lives in the job).
@@ -148,4 +150,29 @@ func (t *Task) Resume(nextRunAt *time.Time, now time.Time) {
 func (t *Task) Delete(now time.Time) {
 	t.Status = StatusDeleted
 	t.UpdatedAt = now
+}
+
+// Priority is numeric so the jobs table can ORDER BY it: lower = more urgent.
+type Priority uint8
+
+const (
+	PriorityCritical Priority = iota
+	PriorityHigh
+	PriorityNormal
+	PriorityLow
+)
+
+type RetryPolicy struct {
+	MaxAttempts int
+	BackoffBase time.Duration // delay before retry n = BackoffBase * 2^(n-1)
+}
+
+func (r RetryPolicy) validate() error {
+	if r.MaxAttempts < 1 || r.MaxAttempts > maxAttemptsLimit {
+		return invalid("max_attempts must be between 1 and 255")
+	}
+	if r.BackoffBase <= 0 || r.BackoffBase > maxBackoffBase || r.BackoffBase%time.Second != 0 {
+		return invalid("backoff base must be a whole number of seconds, up to one day")
+	}
+	return nil
 }
