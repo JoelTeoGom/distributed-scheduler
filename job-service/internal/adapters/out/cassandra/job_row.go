@@ -46,7 +46,7 @@ func (r *jobRow) toJob() *domain.Job {
 		TenantID:    uuid.UUID(r.tenantID),
 		TaskID:      uuid.UUID(r.taskID),
 		ScheduledAt: r.scheduledAt.UTC(),
-		Config:      domain.Config{Priority: domain.Priority(r.priority)},
+		Config:      domain.JobConfig{Priority: domain.Priority(r.priority)},
 		Status:      domain.Status(r.status),
 		Attempt:     int(r.attempt),
 		Result: domain.Result{
