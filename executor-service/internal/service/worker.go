@@ -10,14 +10,15 @@ import (
 
 type WorkerService struct {
 	db           ports.JobRepository
+	requests     ports.RequestExecutor
 	jobQueueSize int
 	timeLimit    int
 }
 
 var _ ports.WorkerService = (*WorkerService)(nil)
 
-func NewWorkerService(db ports.JobRepository, jobQueueSize, timeLimit int) *WorkerService {
-	return &WorkerService{db: db, jobQueueSize: jobQueueSize, timeLimit: timeLimit}
+func NewWorkerService(db ports.JobRepository, requests ports.RequestExecutor, jobQueueSize, timeLimit int) *WorkerService {
+	return &WorkerService{db: db, requests: requests, jobQueueSize: jobQueueSize, timeLimit: timeLimit}
 }
 
 func (s *WorkerService) StartWorkerPool(ctx context.Context, workerCount int) error {
@@ -90,11 +91,9 @@ func (s *WorkerService) executeJob(ctx context.Context, job *domain.Job, sem cha
 	case <-time.After(time.Until(job.NextAttemptAt)):
 	}
 
-	executionContext, cancel := context.WithTimeout(ctx, job.Config.Timeout)
-	defer cancel()
-
-	// Execute the job
-	result := s.requests.Execute(ctx, job)
+	// The executor applies job.Config.Timeout to the request.
+	job.Result = s.requests.Execute(ctx, job)
+	// TODO: decide succeeded, retry or dead from job.Result and save the job.
 
 	return nil
 }
