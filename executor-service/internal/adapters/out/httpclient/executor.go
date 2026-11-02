@@ -1,0 +1,102 @@
+package httpclient
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"time"
+
+	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/domain"
+	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/ports"
+)
+
+const maxResponseBodySize = 64 << 10
+
+type Executor struct {
+	client *http.Client
+}
+
+var _ ports.RequestExecutor = (*Executor)(nil)
+
+func NewExecutor() *Executor {
+	dialer := &net.Dialer{
+		Timeout: 10 * time.Second,
+		Control: rejectInternalAddress,
+	}
+
+	// No proxy: it would make the dialer check the proxy address instead of the endpoint.
+	transport := &http.Transport{
+		DialContext:         dialer.DialContext,
+		ForceAttemptHTTP2:   true,
+		TLSHandshakeTimeout: 10 * time.Second,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	}
+
+	return &Executor{client: &http.Client{
+		Transport: transport,
+		// A redirect could take the request away from the URL the task-service validated.
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}}
+}
+
+func (e *Executor) Execute(ctx context.Context, job *domain.Job) domain.Result {
+	startedAt := time.Now()
+	httpStatus, responseBody, err := e.send(ctx, job)
+	finishedAt := time.Now()
+
+	result := domain.Result{
+		StartedAt:    &startedAt,
+		FinishedAt:   &finishedAt,
+		ResponseBody: responseBody,
+	}
+	if httpStatus != 0 {
+		result.HTTPStatus = &httpStatus
+	}
+	if err != nil {
+		result.Error = describeError(err)
+	}
+	return result
+}
+
+func (e *Executor) send(ctx context.Context, job *domain.Job) (int, []byte, error) {
+	requestContext, cancel := context.WithTimeout(ctx, job.Config.Timeout)
+	defer cancel()
+
+	jobRequest := job.Config.Request
+	request, err := http.NewRequestWithContext(requestContext, jobRequest.Method, jobRequest.URL, bytes.NewReader(jobRequest.Body))
+	if err != nil {
+		return 0, nil, fmt.Errorf("build request: %w", err)
+	}
+
+	for name, value := range jobRequest.Headers {
+		request.Header.Set(name, value)
+	}
+	request.Header.Set("Idempotency-Key", job.ID.String())
+	// TODO: resolve jobRequest.SecretRef into the credentials header once there is a secret store.
+
+	response, err := e.client.Do(request)
+	if err != nil {
+		return 0, nil, err
+	}
+	defer response.Body.Close()
+
+	responseBody, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBodySize))
+	if err != nil {
+		return response.StatusCode, responseBody, fmt.Errorf("read response: %w", err)
+	}
+	return response.StatusCode, responseBody, nil
+}
+
+func describeError(err error) string {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "timeout"
+	}
+	return err.Error()
+}
