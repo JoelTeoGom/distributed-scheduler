@@ -22,9 +22,17 @@ Each job waits until its `next_attempt_at`, never before, and then sends the req
 
 **The lease starts at the job's time, not at the claim.** It is `GREATEST(next_attempt_at, NOW()) + timeout + 30 s`. Counted from the claim, the reconciler would take back jobs still waiting for their timer.
 
-**`worker_id` is the executor, not a goroutine.** It holds the pod name. Inside a pod each job belongs to one goroutine, so the database only needs to know which instance claimed it.
+**`worker_id` is the executor, not a goroutine.** It holds `EXECUTOR_ID`, or the hostname when it is empty, which in Kubernetes is the pod name. Inside a pod each job belongs to one goroutine, so the database only needs to know which instance claimed it.
 
-**`attempt` grows on the claim.** A job whose executor dies mid-request has already spent its attempt, so the reconciler does not need to count it again.
+**`attempt` grows on the claim.** A job whose executor dies mid-request has already spent its attempt, so the reconciler does not need to count it again, and the executor decides between retry and dead by comparing it with `max_attempts` without adding one.
+
+**One update per outcome.** Succeeded, retry and dead each have their own query, because each clears different columns: retry frees `worker_id` and moves `next_attempt_at`, while succeeded and dead keep `worker_id` to show which executor ran the job. A generic update with a list of fields would leave the service in charge of remembering them.
+
+**`attempt` is the fencing token.** Every result update is guarded by `status = 'running' AND worker_id = ? AND attempt = ?`, with the attempt of this claim. If the lease expired and the job was claimed again, even by the same executor, the late write affects 0 rows and returns `ErrLeaseLost`. The result is dropped: the job may run twice, and the `Idempotency-Key` covers that.
+
+**Late results after a lease expires** are walked through step by step in [docs/design/late-results.md](../docs/design/late-results.md).
+
+**What customers must do with duplicate deliveries** is in [docs/client/receiving-jobs.md](../docs/client/receiving-jobs.md).
 
 **Every job sends `Idempotency-Key: <job id>`.** Execution is at least once: a retry or an expired lease can run a job twice, and the endpoint can use the key to detect the duplicate.
 
