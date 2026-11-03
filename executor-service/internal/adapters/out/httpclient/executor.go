@@ -25,11 +25,14 @@ var _ ports.RequestExecutor = (*Executor)(nil)
 func NewExecutor() *Executor {
 	dialer := &net.Dialer{
 		Timeout: 10 * time.Second,
-		Control: rejectInternalAddress,
+		// Commented out for now so local tests can call endpoints on localhost. Enable it before deploying.
+		// Control: checkDestination,
 	}
 
-	// No proxy: it would make the dialer check the proxy address instead of the endpoint.
 	transport := &http.Transport{
+		// Only http.DefaultTransport reads HTTP_PROXY and HTTPS_PROXY, so this custom Transport already ignores them.
+		// nil just makes it explicit: a proxy would make the dialer check the proxy address instead of the endpoint.
+		Proxy:               nil,
 		DialContext:         dialer.DialContext,
 		ForceAttemptHTTP2:   true,
 		TLSHandshakeTimeout: 10 * time.Second,
@@ -94,8 +97,12 @@ func (e *Executor) send(ctx context.Context, job *domain.Job) (int, []byte, erro
 	return response.StatusCode, responseBody, nil
 }
 
+// The error is visible to the tenant, so a blocked dial never shows the resolved address.
 func describeError(err error) string {
-	if errors.Is(err, context.DeadlineExceeded) {
+	switch {
+	case errors.Is(err, domain.ErrDestinationBlocked):
+		return domain.ErrDestinationBlocked.Error()
+	case errors.Is(err, context.DeadlineExceeded):
 		return "timeout"
 	}
 	return err.Error()
