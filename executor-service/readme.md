@@ -2,7 +2,7 @@
 
 Runs jobs. It claims due jobs from the MySQL `jobs` table, waits until each one's time, makes the HTTP call the tenant configured and saves the result. A job is one execution of a task. Creating tasks and jobs belongs to other services.
 
-It has no API: it only talks to MySQL and to the tenants' endpoints. Work in progress is tracked in [docs/executor-plan.md](../docs/executor-plan.md).
+It has no API: it only talks to MySQL and to the tenants' endpoints. Jobs whose executor died are recovered by the [reconciler-service](../reconciler-service/readme.md).
 
 ## Use cases
 
