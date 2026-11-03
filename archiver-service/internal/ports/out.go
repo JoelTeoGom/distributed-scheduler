@@ -18,8 +18,10 @@ type JobRepository interface {
 
 // JobHistoryRepository is backed by Cassandra.
 type JobHistoryRepository interface {
-	// CreateJob writes the job to job_history and job_by_id. Writing the same job twice overwrites the same rows.
-	CreateJob(ctx context.Context, job *domain.Job) error
+	// CreateJobs writes each job to job_history and job_by_id and returns the ones written. A job that fails
+	// is logged and left out, so the caller only deletes what reached Cassandra. Writing the same job twice
+	// overwrites the same rows.
+	CreateJobs(ctx context.Context, jobs []*domain.Job) ([]*domain.Job, error)
 }
 
 type ArchiverService interface {

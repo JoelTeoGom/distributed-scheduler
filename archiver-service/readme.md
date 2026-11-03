@@ -16,6 +16,12 @@ A finished job never changes again, but it stays in the `jobs` table, which is a
 
 **The delete checks the status and the attempt.** It deletes `(id, status, attempt)` as they were read. A dead job retried by hand in between goes back to `pending` with its attempts cleared, so it no longer matches and stays in the queue. Its copy in Cassandra is overwritten when it is archived again.
 
+**An index for the sweep.** `idx_jobs_archive (status, finished_at)`, in the job-service migrations, turns each status into one range of the index. Without it every sweep reads the whole table.
+
+**Parallel inserts, not batches.** Cassandra has no bulk insert: a batch across partitions goes through one coordinator and its batch log, and is slower than separate writes. Each job is written by its own goroutine, at most 64 at a time. Against a local node, 500 jobs take about 20 ms instead of 1.8 s one by one. A job that fails is logged and left out, so it stays in MySQL until the next sweep.
+
+**Empty columns are left unset in Cassandra.** Binding `null` in an `INSERT` writes a tombstone, and tombstones slow down reads until compaction removes them. A job with no response, for example, leaves `http_status` and `response_body` unset.
+
 **Each status has its own retention.** Succeeded jobs leave after `SUCCEEDED_RETENTION` (1 hour). Dead jobs stay `DEAD_RETENTION` (14 days), the window in which a tenant can retry them from the DLQ, which only reads MySQL.
 
 ## Structure
@@ -39,4 +45,11 @@ It needs MySQL 8.4 with the job-service migrations applied (`job-service/migrati
 ```bash
 cp .env.example .env.local
 go run ./cmd
+```
+
+The adapter tests need both stores. The MySQL jobs they seed finished in 2000, so they never touch real rows:
+
+```bash
+ARCHIVER_TEST_DSN='scheduler:scheduler@tcp(localhost:3307)/scheduler?parseTime=true&loc=UTC&time_zone=%27%2B00%3A00%27' \
+  go test -tags integration ./internal/adapters/...
 ```
