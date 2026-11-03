@@ -38,6 +38,8 @@ There is no race inside MySQL. Two UPDATEs on the same row are serialized by Inn
 
 ## Refinement: accept late successes
 
+> **To do:** not built yet. Today every late result is dropped.
+
 A success that lands between the reconciler and the next claim can still be kept, as long as nobody has claimed the job again:
 
 ```sql
@@ -54,5 +56,9 @@ The endpoint receiving the call twice: A already called it, and B calls it again
 ## Making it rare
 
 - **Lease margin larger than the timeout.** The lease is the timeout plus 30 s, and the HTTP context is the timeout.
-- **A short timeout for the result write.** The result UPDATE has its own timeout (e.g. 5 s) and never runs past the `lease_expires_at` returned by the claim. Abandoning a late write is better than writing it late.
+- **A log line for each discarded result.** The executor logs `ErrLeaseLost` as a warning, with the job id and attempt.
+
+To do, not built yet:
+
+- **A short timeout for the result write.** The result UPDATE would get its own timeout (e.g. 5 s) and never run past the `lease_expires_at` returned by the claim. Abandoning a late write is better than writing it late.
 - **A metric for discarded late results** (0 rows affected). If it grows, the lease margin is too short or the database is slow.

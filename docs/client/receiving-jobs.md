@@ -14,7 +14,9 @@ Exactly-once delivery over a network does not exist. Deduplication on your side 
 
 ## Success and retries
 
-Any `2xx` is a success. Anything else (other status codes, timeouts, connection errors) is retried with exponential backoff, up to the task's maximum attempts. `429` and `503` honour `Retry-After`.
+Any `2xx` is a success. Anything else (other status codes, timeouts, connection errors) is retried with exponential backoff, up to the task's maximum attempts. Redirects are not followed: a `3xx` counts as a failure.
+
+> **Coming later:** `429` and `503` will honour `Retry-After`. Today they are retried on the normal backoff.
 
 After the last attempt the job goes to the dead letter queue, where it can be retried manually with the same job ID.
 
