@@ -18,6 +18,7 @@ const (
 	defaultShutdownGracePeriod = "30s"
 	defaultJobQueueSize        = "1000"
 	defaultJobTimeLimitSeconds = "10"
+	defaultWorkerCount         = "50"
 )
 
 type Config struct {
@@ -28,6 +29,7 @@ type Config struct {
 	ShutdownGracePeriod time.Duration
 	JobQueueSize        int
 	JobTimeLimitSeconds int
+	WorkerCount         int
 }
 
 // Variables already set in the environment win over .env.local, so a container needs no file.
@@ -51,6 +53,11 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse JOB_TIME_LIMIT_SECONDS: %w", err)
 	}
 
+	workerCount, err := strconv.Atoi(getEnvOrDefault("WORKER_COUNT", defaultWorkerCount))
+	if err != nil {
+		return Config{}, fmt.Errorf("parse WORKER_COUNT: %w", err)
+	}
+
 	executorID := os.Getenv("EXECUTOR_ID")
 	if executorID == "" {
 		// In Kubernetes the hostname is the pod name.
@@ -67,6 +74,7 @@ func Load() (Config, error) {
 		ShutdownGracePeriod: shutdownGracePeriod,
 		JobQueueSize:        jobQueueSize,
 		JobTimeLimitSeconds: jobTimeLimitSeconds,
+		WorkerCount:         workerCount,
 	}
 	if err := config.validate(); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)
@@ -94,6 +102,10 @@ func (c Config) validate() error {
 
 	if c.JobTimeLimitSeconds <= 0 {
 		problems = append(problems, errors.New("JOB_TIME_LIMIT_SECONDS must be positive"))
+	}
+
+	if c.WorkerCount <= 0 {
+		problems = append(problems, errors.New("WORKER_COUNT must be positive"))
 	}
 	return errors.Join(problems...)
 }

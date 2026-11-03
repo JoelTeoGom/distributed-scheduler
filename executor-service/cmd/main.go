@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os/signal"
 	"syscall"
 
+	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/adapters/out/httpclient"
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/adapters/out/mysql"
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/config"
+	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/service"
 )
 
 func main() {
@@ -24,7 +27,15 @@ func main() {
 		log.Fatalf("open database: %v", err)
 	}
 
-	<-ctx.Done()
+	jobRepository := mysql.NewJobRepository(db, config.ExecutorID)
+	executor := httpclient.NewExecutor()
+	workerService := service.NewWorkerService(jobRepository, executor, config.JobQueueSize, config.JobTimeLimitSeconds)
+
+	// The pool runs until the signal, and the database closes after it so in-flight jobs can save their result.
+	if err := workerService.StartWorkerPool(ctx, config.WorkerCount); err != nil && !errors.Is(err, context.Canceled) {
+		db.Close()
+		log.Fatalf("worker pool: %v", err)
+	}
 
 	if err := db.Close(); err != nil {
 		log.Printf("close database: %v", err)
