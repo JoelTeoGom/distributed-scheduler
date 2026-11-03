@@ -14,7 +14,7 @@ import (
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/ports"
 )
 
-const maxResponseBodySize = 64 << 10
+const maxResponseBodySize = 4 << 10
 
 type Executor struct {
 	client *http.Client
