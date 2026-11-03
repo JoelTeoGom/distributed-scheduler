@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/domain"
@@ -34,7 +35,9 @@ func (s *WorkerService) StartWorkerPool(ctx context.Context, workerCount int) er
 		go s.StartWorker(ctx, i, sem, jobChan)
 	}
 
-	ticker := time.NewTicker(10 * time.Second)
+	// The claim takes jobs due up to timeLimit ahead, so ticking at the same interval leaves no gap between claims.
+	ticker := time.NewTicker(time.Duration(s.timeLimit) * time.Second)
+	defer ticker.Stop()
 
 	for {
 		select {
@@ -42,16 +45,16 @@ func (s *WorkerService) StartWorkerPool(ctx context.Context, workerCount int) er
 			return ctx.Err()
 		case <-ticker.C:
 			semSize := len(sem)
-			if semSize == 0 {
-				continue
-			}
+
 			availableWorkers := workerCount - semSize
 			if availableWorkers <= 0 {
 				continue
 			}
 			jobs, err := s.db.ClaimJobs(ctx, s.timeLimit, availableWorkers)
 			if err != nil {
-				return err
+				// A database outage must not stop the pool: the next tick claims again.
+				slog.ErrorContext(ctx, "claim jobs", "error", err)
+				continue
 			}
 			for _, job := range jobs {
 				select {
