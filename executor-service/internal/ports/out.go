@@ -13,6 +13,7 @@ type JobRepository interface {
 	SaveSucceeded(ctx context.Context, job *domain.Job) error
 	SaveRetry(ctx context.Context, job *domain.Job, nextAttemptAt time.Time) error
 	SaveDead(ctx context.Context, job *domain.Job) error
+	ReleaseJob(ctx context.Context, job *domain.Job) error
 }
 
 // RequestExecutor sends the job request. Endpoint failures go in the Result; the error is

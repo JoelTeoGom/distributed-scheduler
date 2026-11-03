@@ -36,6 +36,8 @@ Each job waits until its `next_attempt_at`, never before, and then sends the req
 
 **What customers must do with duplicate deliveries** is in [docs/client/receiving-jobs.md](../docs/client/receiving-jobs.md).
 
+**Shutdown splits jobs by whether the request went out.** On `SIGTERM` the pool stops claiming and closes the job channel. A job still waiting for its time goes back to `pending` with its attempt given back, since that attempt never happened. A request already sent runs on its own context and gets `SHUTDOWN_GRACE_PERIOD` to finish and save its result: cutting it would waste the call and run the job twice. When the grace period runs out the rest are cancelled and the reconciler takes them back. The pod's `terminationGracePeriodSeconds` has to be longer than the grace period.
+
 **Every job sends `Idempotency-Key: <job id>`.** Execution is at least once: a retry or an expired lease can run a job twice, and the endpoint can use the key to detect the duplicate. `X-Scheduled-At` tells the endpoint which run this is and `X-Attempt` which attempt. All three are set after the tenant's headers, so a task cannot overwrite them.
 
 ### Security: SSRF
@@ -55,6 +57,14 @@ The executor calls URLs chosen by tenants from inside the network, next to MySQL
 **Limits on everything.** A timeout per job, timeouts for connect and TLS, and a limited response body, so an endpoint that never answers or returns gigabytes cannot take a worker down.
 
 Network-level protection (an egress `NetworkPolicy`, IMDSv2) is left to the deployment. An egress proxy like Stripe's Smokescreen is out of scope for this prototype.
+
+## To do
+
+- Accept late successes: a `SaveSucceeded` guarded only by `attempt`, as [late-results.md](../docs/design/late-results.md) describes.
+- Give the result update its own short timeout (about 5 s), never past the lease.
+- A metric for results discarded with `ErrLeaseLost`.
+- Jitter (±20%) on the backoff, and `Retry-After` on `429` and `503`.
+- A concurrency limit per tenant in the claim, so one tenant cannot take every worker.
 
 ## Structure
 

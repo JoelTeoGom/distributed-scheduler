@@ -137,6 +137,25 @@ func (r *JobRepository) SaveDead(ctx context.Context, job *domain.Job) error {
 	return checkLeaseHeld(result)
 }
 
+// The attempt never happened, so the claim gives it back. Reusing that attempt number is safe:
+// this is the last write of this executor for the job, so no late result can come after it.
+func (r *JobRepository) ReleaseJob(ctx context.Context, job *domain.Job) error {
+	result, err := r.db.ExecContext(ctx, `
+		UPDATE jobs
+		SET status           = 'pending',
+		    attempt          = attempt - 1,
+		    worker_id        = NULL,
+		    started_at       = NULL,
+		    lease_expires_at = NULL,
+		    updated_at       = NOW(3)
+		WHERE id = ? AND status = 'running' AND worker_id = ? AND attempt = ?`,
+		job.ID[:], r.executorID, job.Attempt)
+	if err != nil {
+		return fmt.Errorf("mysql: release job: %w", err)
+	}
+	return checkLeaseHeld(result)
+}
+
 // SKIP LOCKED lets several executors claim at the same time without waiting for each other's rows.
 func selectClaimableJobIDs(ctx context.Context, tx *sql.Tx, timeLimit, jobLimit int) ([]uuid.UUID, error) {
 	rows, err := tx.QueryContext(ctx, `
