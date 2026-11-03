@@ -23,6 +23,7 @@ const (
 type Config struct {
 	ServiceName         string
 	ServiceVersion      string
+	ExecutorID          string
 	DatabaseDSN         string
 	ShutdownGracePeriod time.Duration
 	JobQueueSize        int
@@ -50,8 +51,17 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse JOB_TIME_LIMIT_SECONDS: %w", err)
 	}
 
+	executorID := os.Getenv("EXECUTOR_ID")
+	if executorID == "" {
+		// In Kubernetes the hostname is the pod name.
+		if executorID, err = os.Hostname(); err != nil {
+			return Config{}, fmt.Errorf("read hostname: %w", err)
+		}
+	}
+
 	config := Config{
 		ServiceName:         getEnvOrDefault("SERVICE_NAME", defaultServiceName),
+		ExecutorID:          executorID,
 		ServiceVersion:      getEnvOrDefault("SERVICE_VERSION", defaultServiceVersion),
 		DatabaseDSN:         os.Getenv("DATABASE_DSN"),
 		ShutdownGracePeriod: shutdownGracePeriod,
@@ -68,6 +78,10 @@ func (c Config) validate() error {
 	var problems []error
 	if c.DatabaseDSN == "" {
 		problems = append(problems, errors.New("DATABASE_DSN is required"))
+	}
+
+	if len(c.ExecutorID) > 64 {
+		problems = append(problems, errors.New("EXECUTOR_ID must be at most 64 characters"))
 	}
 
 	if c.ShutdownGracePeriod <= 0 {
