@@ -19,6 +19,7 @@ const (
 	defaultJobQueueSize        = "1000"
 	defaultJobTimeLimitSeconds = "10"
 	defaultWorkerCount         = "50"
+	defaultAllowPrivate        = "false"
 )
 
 type Config struct {
@@ -30,6 +31,8 @@ type Config struct {
 	JobQueueSize        int
 	JobTimeLimitSeconds int
 	WorkerCount         int
+	// Turns the SSRF check off so local tests can call endpoints on localhost.
+	AllowPrivateDestinations bool
 }
 
 // Variables already set in the environment win over .env.local, so a container needs no file.
@@ -58,6 +61,11 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse WORKER_COUNT: %w", err)
 	}
 
+	allowPrivateDestinations, err := strconv.ParseBool(getEnvOrDefault("ALLOW_PRIVATE_DESTINATIONS", defaultAllowPrivate))
+	if err != nil {
+		return Config{}, fmt.Errorf("parse ALLOW_PRIVATE_DESTINATIONS: %w", err)
+	}
+
 	executorID := os.Getenv("EXECUTOR_ID")
 	if executorID == "" {
 		// In Kubernetes the hostname is the pod name.
@@ -67,14 +75,15 @@ func Load() (Config, error) {
 	}
 
 	config := Config{
-		ServiceName:         getEnvOrDefault("SERVICE_NAME", defaultServiceName),
-		ExecutorID:          executorID,
-		ServiceVersion:      getEnvOrDefault("SERVICE_VERSION", defaultServiceVersion),
-		DatabaseDSN:         os.Getenv("DATABASE_DSN"),
-		ShutdownGracePeriod: shutdownGracePeriod,
-		JobQueueSize:        jobQueueSize,
-		JobTimeLimitSeconds: jobTimeLimitSeconds,
-		WorkerCount:         workerCount,
+		ServiceName:              getEnvOrDefault("SERVICE_NAME", defaultServiceName),
+		ExecutorID:               executorID,
+		ServiceVersion:           getEnvOrDefault("SERVICE_VERSION", defaultServiceVersion),
+		DatabaseDSN:              os.Getenv("DATABASE_DSN"),
+		ShutdownGracePeriod:      shutdownGracePeriod,
+		JobQueueSize:             jobQueueSize,
+		JobTimeLimitSeconds:      jobTimeLimitSeconds,
+		WorkerCount:              workerCount,
+		AllowPrivateDestinations: allowPrivateDestinations,
 	}
 	if err := config.validate(); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)

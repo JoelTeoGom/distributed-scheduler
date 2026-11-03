@@ -28,7 +28,10 @@ func main() {
 	}
 
 	jobRepository := mysql.NewJobRepository(db, config.ExecutorID)
-	executor := httpclient.NewExecutor()
+	if config.AllowPrivateDestinations {
+		log.Printf("ALLOW_PRIVATE_DESTINATIONS is on: jobs can call internal addresses, never use it in production")
+	}
+	executor := httpclient.NewExecutor(config.AllowPrivateDestinations)
 	workerService := service.NewWorkerService(jobRepository, executor, config.JobQueueSize, config.JobTimeLimitSeconds)
 
 	// The pool runs until the signal, and the database closes after it so in-flight jobs can save their result.

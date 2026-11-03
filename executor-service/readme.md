@@ -44,7 +44,7 @@ The executor calls URLs chosen by tenants from inside the network, next to MySQL
 
 **The real IP is checked at dial time.** The dialer's `Control` runs after DNS resolution and before `connect()`, with the exact address being dialed. It runs on every connection, so it covers every IP of a name and DNS rebinding. It allows only `tcp4` and `tcp6`, ports 80 and 443, and public unicast addresses. IPv4-mapped IPv6 is unmapped first, and the ranges `IsGlobalUnicast` and `IsPrivate` let through (CGNAT, NAT64, 6to4, reserved) are blocked as well.
 
-> `Control` is commented out in `NewExecutor` for now, so local tests can call endpoints on `localhost`. It has to be enabled before deploying.
+> `ALLOW_PRIVATE_DESTINATIONS=true` turns the check off, so local tests can call endpoints on `localhost`. It is off by default, so a deployment that forgets the variable keeps the check, and the executor logs a warning at startup when it is on.
 
 **No proxy.** A proxy resolves the destination itself, so `Control` would only see the proxy's address. Only `http.DefaultTransport` reads `HTTP_PROXY` and `HTTPS_PROXY`; the executor uses its own `Transport`, with `Proxy: nil` written explicitly.
 

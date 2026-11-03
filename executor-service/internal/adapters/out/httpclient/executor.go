@@ -23,11 +23,11 @@ type Executor struct {
 
 var _ ports.RequestExecutor = (*Executor)(nil)
 
-func NewExecutor() *Executor {
-	dialer := &net.Dialer{
-		Timeout: 10 * time.Second,
-		// Commented out for now so local tests can call endpoints on localhost. Enable it before deploying.
-		// Control: checkDestination,
+func NewExecutor(allowPrivateDestinations bool) *Executor {
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	// Local tests call endpoints on localhost, which the SSRF check blocks.
+	if !allowPrivateDestinations {
+		dialer.Control = checkDestination
 	}
 
 	transport := &http.Transport{
