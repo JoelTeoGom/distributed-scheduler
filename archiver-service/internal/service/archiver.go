@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/archiver-service/internal/ports"
@@ -30,5 +31,49 @@ func NewArchiverService(jobs ports.JobRepository, history ports.JobHistoryReposi
 }
 
 func (s *ArchiverService) StartArchiver(ctx context.Context) error {
-	return nil
+	ticker := time.NewTicker(s.interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			s.archiveJobs(ctx)
+		}
+	}
+}
+
+func (s *ArchiverService) archiveJobs(ctx context.Context) {
+	for {
+		now := time.Now()
+		jobs, err := s.jobs.ListArchivableJobs(ctx, now.Add(-s.succeededRetention), now.Add(-s.deadRetention), s.batchSize)
+		if err != nil {
+			slog.ErrorContext(ctx, "list archivable jobs", "error", err)
+			return
+		}
+		if len(jobs) == 0 {
+			return
+		}
+
+		// Cassandra goes first: a job deleted before it reached the history would be lost.
+		createdJobs, err := s.history.CreateJobs(ctx, jobs)
+		if err != nil {
+			slog.ErrorContext(ctx, "create job history", "error", err)
+			return
+		}
+
+		deletedJobs, err := s.jobs.DeleteJobs(ctx, createdJobs)
+		if err != nil {
+			slog.ErrorContext(ctx, "delete archived jobs", "error", err)
+			return
+		}
+		slog.InfoContext(ctx, "jobs archived", "count", deletedJobs)
+
+		// A short batch means nothing is left. Nothing deleted means Cassandra is failing, and the next
+		// list would return the same jobs, so the loop waits for the next tick instead.
+		if len(jobs) < s.batchSize || deletedJobs == 0 {
+			return
+		}
+	}
 }

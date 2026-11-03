@@ -22,6 +22,8 @@ A finished job never changes again, but it stays in the `jobs` table, which is a
 
 **Empty columns are left unset in Cassandra.** Binding `null` in an `INSERT` writes a tombstone, and tombstones slow down reads until compaction removes them. A job with no response, for example, leaves `http_status` and `response_body` unset.
 
+**Batches until there is nothing left, or no progress.** Each tick repeats list, write and delete while batches come back full. If a batch deletes nothing, Cassandra is failing and the next list would return the same jobs, so the loop waits for the next tick instead of spinning.
+
 **Each status has its own retention.** Succeeded jobs leave after `SUCCEEDED_RETENTION` (1 hour). Dead jobs stay `DEAD_RETENTION` (14 days), the window in which a tenant can retry them from the DLQ, which only reads MySQL.
 
 ## Structure
@@ -47,7 +49,7 @@ cp .env.example .env.local
 go run ./cmd
 ```
 
-The adapter tests need both stores. The MySQL jobs they seed finished in 2000, so they never touch real rows:
+The service tests use in-memory fakes and need nothing: `go test ./...`. The adapter tests need both stores. The MySQL jobs they seed finished in 2000, so they never touch real rows:
 
 ```bash
 ARCHIVER_TEST_DSN='scheduler:scheduler@tcp(localhost:3307)/scheduler?parseTime=true&loc=UTC&time_zone=%27%2B00%3A00%27' \
