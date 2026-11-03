@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/domain"
@@ -82,6 +83,8 @@ func (e *Executor) send(ctx context.Context, job *domain.Job) (int, []byte, erro
 		request.Header.Set(name, value)
 	}
 	request.Header.Set("Idempotency-Key", job.ID.String())
+	request.Header.Set("X-Scheduled-At", job.ScheduledAt.UTC().Format(time.RFC3339))
+	request.Header.Set("X-Attempt", strconv.Itoa(job.Attempt))
 	// TODO: resolve jobRequest.SecretRef into the credentials header once there is a secret store.
 
 	response, err := e.client.Do(request)

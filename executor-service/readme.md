@@ -34,7 +34,7 @@ Each job waits until its `next_attempt_at`, never before, and then sends the req
 
 **What customers must do with duplicate deliveries** is in [docs/client/receiving-jobs.md](../docs/client/receiving-jobs.md).
 
-**Every job sends `Idempotency-Key: <job id>`.** Execution is at least once: a retry or an expired lease can run a job twice, and the endpoint can use the key to detect the duplicate.
+**Every job sends `Idempotency-Key: <job id>`.** Execution is at least once: a retry or an expired lease can run a job twice, and the endpoint can use the key to detect the duplicate. `X-Scheduled-At` tells the endpoint which run this is and `X-Attempt` which attempt. All three are set after the tenant's headers, so a task cannot overwrite them.
 
 ### Security: SSRF
 
