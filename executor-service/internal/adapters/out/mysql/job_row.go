@@ -9,6 +9,8 @@ import (
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/domain"
 )
 
+const maxErrorLength = 1024
+
 type rowScanner interface {
 	Scan(destinations ...any) error
 }
@@ -63,6 +65,24 @@ func scanJob(scanner rowScanner) (*domain.Job, error) {
 		job.AssignedWorker = &domain.Worker{Name: workerName.String, LeaseExpiresAt: leaseExpiresAt.Time}
 	}
 	return &job, nil
+}
+
+func nullableInt(value *int) sql.NullInt64 {
+	if value == nil {
+		return sql.NullInt64{}
+	}
+	return sql.NullInt64{Int64: int64(*value), Valid: true}
+}
+
+// The error column is VARCHAR(1024), and a url.Error carries the whole URL, which can be 2048 characters.
+func nullableError(message string) sql.NullString {
+	if message == "" {
+		return sql.NullString{}
+	}
+	if characters := []rune(message); len(characters) > maxErrorLength {
+		message = string(characters[:maxErrorLength])
+	}
+	return sql.NullString{String: message, Valid: true}
 }
 
 func timePointer(value sql.NullTime) *time.Time {

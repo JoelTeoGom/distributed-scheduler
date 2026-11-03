@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -76,6 +77,66 @@ func (r *JobRepository) ClaimJobs(ctx context.Context, timeLimit, jobLimit int) 
 	return jobs, nil
 }
 
+// The guard on attempt fences out writes from an older claim, even one made by this same executor.
+func (r *JobRepository) SaveSucceeded(ctx context.Context, job *domain.Job) error {
+	result, err := r.db.ExecContext(ctx, `
+		UPDATE jobs
+		SET status           = 'succeeded',
+		    http_status      = ?,
+		    response_body    = ?,
+		    error            = NULL,
+		    finished_at      = NOW(3),
+		    lease_expires_at = NULL,
+		    updated_at       = NOW(3)
+		WHERE id = ? AND status = 'running' AND worker_id = ? AND attempt = ?`,
+		nullableInt(job.Result.HTTPStatus), job.Result.ResponseBody,
+		job.ID[:], r.executorID, job.Attempt)
+	if err != nil {
+		return fmt.Errorf("mysql: save succeeded job: %w", err)
+	}
+	return checkLeaseHeld(result)
+}
+
+func (r *JobRepository) SaveRetry(ctx context.Context, job *domain.Job, nextAttemptAt time.Time) error {
+	result, err := r.db.ExecContext(ctx, `
+		UPDATE jobs
+		SET status           = 'pending',
+		    next_attempt_at  = ?,
+		    http_status      = ?,
+		    error            = ?,
+		    response_body    = ?,
+		    worker_id        = NULL,
+		    lease_expires_at = NULL,
+		    updated_at       = NOW(3)
+		WHERE id = ? AND status = 'running' AND worker_id = ? AND attempt = ?`,
+		nextAttemptAt, nullableInt(job.Result.HTTPStatus), nullableError(job.Result.Error), job.Result.ResponseBody,
+		job.ID[:], r.executorID, job.Attempt)
+	if err != nil {
+		return fmt.Errorf("mysql: save retry job: %w", err)
+	}
+	return checkLeaseHeld(result)
+}
+
+// worker_id is kept so the job detail can show which executor ran it.
+func (r *JobRepository) SaveDead(ctx context.Context, job *domain.Job) error {
+	result, err := r.db.ExecContext(ctx, `
+		UPDATE jobs
+		SET status           = 'dead',
+		    http_status      = ?,
+		    error            = ?,
+		    response_body    = ?,
+		    finished_at      = NOW(3),
+		    lease_expires_at = NULL,
+		    updated_at       = NOW(3)
+		WHERE id = ? AND status = 'running' AND worker_id = ? AND attempt = ?`,
+		nullableInt(job.Result.HTTPStatus), nullableError(job.Result.Error), job.Result.ResponseBody,
+		job.ID[:], r.executorID, job.Attempt)
+	if err != nil {
+		return fmt.Errorf("mysql: save dead job: %w", err)
+	}
+	return checkLeaseHeld(result)
+}
+
 // SKIP LOCKED lets several executors claim at the same time without waiting for each other's rows.
 func selectClaimableJobIDs(ctx context.Context, tx *sql.Tx, timeLimit, jobLimit int) ([]uuid.UUID, error) {
 	rows, err := tx.QueryContext(ctx, `
@@ -125,4 +186,16 @@ func listJobs(ctx context.Context, tx *sql.Tx, query string, values []any) ([]*d
 		return nil, fmt.Errorf("mysql: list jobs: %w", err)
 	}
 	return jobs, nil
+}
+
+// No affected rows means the reconciler took the job back after its lease expired.
+func checkLeaseHeld(result sql.Result) error {
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("mysql: read affected rows: %w", err)
+	}
+	if affectedRows == 0 {
+		return domain.ErrLeaseLost
+	}
+	return nil
 }
