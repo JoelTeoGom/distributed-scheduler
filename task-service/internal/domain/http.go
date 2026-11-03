@@ -19,7 +19,7 @@ var allowedMethods = map[string]bool{
 	"DELETE": true,
 }
 
-var sensitiveHeaders = map[string]bool{
+var forbiddenHeaders = map[string]bool{
 	"authorization":       true,
 	"proxy-authorization": true,
 	"cookie":              true,
@@ -43,7 +43,7 @@ func (r Request) validate() error {
 		return err
 	}
 	for name := range r.Headers {
-		if sensitiveHeaders[strings.ToLower(name)] {
+		if forbiddenHeaders[strings.ToLower(name)] {
 			return invalid("sensitive headers are not allowed, use secret_ref")
 		}
 	}
