@@ -43,7 +43,7 @@ A soft delete. The task answers `404` everywhere and leaves the list, but stays 
 
 **Validation lives in the domain.** The same rules apply on creation and on edition, and HTTP knows nothing about them. Only the conversion from JSON stays in the adapter.
 
-**URLs are checked against SSRF.** A task must use `https` and cannot point to `localhost`, private addresses or the cloud metadata service. This is not enough on its own: DNS can change later, so the executor has to validate the resolved address again.
+**URLs are checked against SSRF.** A task must use `https` and cannot point to `localhost`, private addresses or the cloud metadata service. This is not enough on its own: DNS can change later, so the executor checks the resolved address again on every connection (see [its SSRF section](../executor-service/readme.md#security-ssrf)).
 
 **Secrets stay out of the task.** `Authorization`, `Cookie` and similar headers are rejected, as are credentials inside the URL. Tasks hold a `secret_ref` instead.
 
