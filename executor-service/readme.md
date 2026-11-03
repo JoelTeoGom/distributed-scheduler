@@ -12,7 +12,7 @@ Every polling interval, the executor claims as many jobs as it has free workers,
 
 ### Execute a job
 
-Each job waits until its `next_attempt_at`, never before, and then sends the request with the job's timeout. The response body is read up to a limit. A failed request goes into the result, not into an error: a timeout, a refused connection or a `500` are outcomes of the job, not failures of the executor.
+Each job waits until its `next_attempt_at`, never before, and then sends the request with the job's timeout. The response body is read up to a limit. A failed request goes into the result, not into an error: a timeout, a refused connection or a `500` are outcomes of the job, not failures of the executor. The one error is a destination blocked by the SSRF check: the request was never sent, and every retry would be blocked again, so the job goes straight to `dead`.
 
 ## Design decisions
 
@@ -27,6 +27,8 @@ Each job waits until its `next_attempt_at`, never before, and then sends the req
 **`attempt` grows on the claim.** A job whose executor dies mid-request has already spent its attempt, so the reconciler does not need to count it again, and the executor decides between retry and dead by comparing it with `max_attempts` without adding one.
 
 **One update per outcome.** Succeeded, retry and dead each have their own query, because each clears different columns: retry frees `worker_id` and moves `next_attempt_at`, while succeeded and dead keep `worker_id` to show which executor ran the job. A generic update with a list of fields would leave the service in charge of remembering them.
+
+**Retries double the wait, up to one day.** The first retry waits the task's `backoff_base_seconds`, and each failure after it doubles the wait. The cap is one day because that is the largest base the task-service accepts.
 
 **`attempt` is the fencing token.** Every result update is guarded by `status = 'running' AND worker_id = ? AND attempt = ?`, with the attempt of this claim. If the lease expired and the job was claimed again, even by the same executor, the late write affects 0 rows and returns `ErrLeaseLost`. The result is dropped: the job may run twice, and the `Idempotency-Key` covers that.
 

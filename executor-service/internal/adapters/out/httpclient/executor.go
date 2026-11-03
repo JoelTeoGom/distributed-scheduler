@@ -50,7 +50,7 @@ func NewExecutor() *Executor {
 	}}
 }
 
-func (e *Executor) Execute(ctx context.Context, job *domain.Job) domain.Result {
+func (e *Executor) Execute(ctx context.Context, job *domain.Job) (domain.Result, error) {
 	startedAt := time.Now()
 	httpStatus, responseBody, err := e.send(ctx, job)
 	finishedAt := time.Now()
@@ -66,7 +66,10 @@ func (e *Executor) Execute(ctx context.Context, job *domain.Job) domain.Result {
 	if err != nil {
 		result.Error = describeError(err)
 	}
-	return result
+	if errors.Is(err, domain.ErrDestinationBlocked) {
+		return result, domain.ErrDestinationBlocked
+	}
+	return result, nil
 }
 
 func (e *Executor) send(ctx context.Context, job *domain.Job) (int, []byte, error) {

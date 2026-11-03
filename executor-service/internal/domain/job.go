@@ -50,7 +50,21 @@ const (
 	PriorityLow
 )
 
+const maxBackoff = 24 * time.Hour
+
 type RetryPolicy struct {
 	MaxAttempts int
 	BackoffBase time.Duration
+}
+
+// Backoff is the wait after a failed attempt: BackoffBase after the first, doubling after each one.
+func (r RetryPolicy) Backoff(attempt int) time.Duration {
+	backoff := r.BackoffBase
+	for range attempt - 1 {
+		if backoff >= maxBackoff {
+			return maxBackoff
+		}
+		backoff *= 2
+	}
+	return min(backoff, maxBackoff)
 }

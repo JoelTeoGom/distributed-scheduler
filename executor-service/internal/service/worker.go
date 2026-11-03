@@ -95,8 +95,39 @@ func (s *WorkerService) executeJob(ctx context.Context, job *domain.Job, sem cha
 	}
 
 	// The executor applies job.Config.Timeout to the request.
-	job.Result = s.requests.Execute(ctx, job)
-	// TODO: decide succeeded, retry or dead from job.Result and save the job.
+	result, err := s.requests.Execute(ctx, job)
+	job.Result = result
+
+	// The request was never sent, and a retry would be blocked again.
+	if err != nil {
+		err := s.db.SaveDead(ctx, job)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if job.Result.HTTPStatus != nil && *job.Result.HTTPStatus >= 200 && *job.Result.HTTPStatus < 300 {
+		err := s.db.SaveSucceeded(ctx, job)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if job.Attempt >= job.Config.Retry.MaxAttempts {
+		err := s.db.SaveDead(ctx, job)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	nextAttemptAt := time.Now().Add(job.Config.Retry.Backoff(job.Attempt))
+	err = s.db.SaveRetry(ctx, job, nextAttemptAt)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
