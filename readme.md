@@ -53,6 +53,17 @@ A **task** is the configuration (schedule, priority, request, retry policy). A *
 | [archiver-service](archiver-service/readme.md) | Moves terminal jobs to the Cassandra history |
 | [job-service](job-service/readme.md) | Job API: status, history, DLQ and manual retry |
 
+### Run everything
+
+```bash
+cp .env.example .env          # then set JWT_SECRET, at least 32 bytes
+docker compose up -d --build
+```
+
+It starts MySQL (port 3307) and Cassandra (9042), applies the migrations, and runs the six services. The APIs listen on `8080` (tasks) and `8081` (jobs).
+
+Each service has a two-stage Dockerfile: a Go image compiles a static binary with the module and build caches mounted, and only the binary moves to `distroless/static`, which has no shell or package manager, runs as `nonroot`, and still carries the CA certificates the executor needs for `https` and the time zones the scheduler needs for cron. Each image is about 15 MB.
+
 For tenants: [what their endpoint receives and must do](docs/client/receiving-jobs.md). For the race between a late result and an expired lease: [late results](docs/design/late-results.md).
 
 ---

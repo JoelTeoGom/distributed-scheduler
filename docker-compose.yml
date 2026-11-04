@@ -1,0 +1,135 @@
+# The whole system on one machine: MySQL, Cassandra, their migrations and the six services, built from their Dockerfiles.
+#   cp .env.example .env    # then set JWT_SECRET
+#   docker compose up -d --build
+name: distributed-scheduler
+
+x-mysql-dsn: &mysql-dsn scheduler:scheduler@tcp(mysql:3306)/scheduler?parseTime=true&loc=UTC&time_zone=%27%2B00%3A00%27
+
+x-after-migrations: &after-migrations
+  migrate-tasks:
+    condition: service_completed_successfully
+  migrate-jobs:
+    condition: service_completed_successfully
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: scheduler
+      MYSQL_USER: scheduler
+      MYSQL_PASSWORD: scheduler
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uscheduler", "-pscheduler"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  cassandra:
+    image: cassandra:5.0
+    environment:
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    ports:
+      - "127.0.0.1:9042:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  migrate-tasks:
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./task-service/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=mysql://scheduler:scheduler@tcp(mysql:3306)/scheduler?x-migrations-table=task_service_migrations", "up"]
+
+  migrate-jobs:
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./job-service/migrations/mysql:/migrations:ro
+    command: ["-path=/migrations", "-database=mysql://scheduler:scheduler@tcp(mysql:3306)/scheduler?x-migrations-table=job_service_migrations", "up"]
+
+  # Cassandra has no migration tool here: the keyspace first, then the tables in order. Every file uses IF NOT EXISTS.
+  migrate-cassandra:
+    image: cassandra:5.0
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./job-service/migrations/cassandra:/migrations:ro
+    entrypoint: ["sh", "-c", "cqlsh cassandra -f /migrations/keyspace.cql && for file in /migrations/0*.up.cql; do cqlsh cassandra -k scheduler -f $$file; done"]
+
+  task-service:
+    build: ./task-service
+    restart: unless-stopped
+    depends_on: *after-migrations
+    environment:
+      DATABASE_DSN: *mysql-dsn
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env, see .env.example}
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  job-service:
+    build: ./job-service
+    restart: unless-stopped
+    depends_on:
+      <<: *after-migrations
+      migrate-cassandra:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_DSN: *mysql-dsn
+      CASSANDRA_HOSTS: cassandra
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env, see .env.example}
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  scheduler-service:
+    build: ./scheduler-service
+    restart: unless-stopped
+    depends_on: *after-migrations
+    environment:
+      DATABASE_DSN: *mysql-dsn
+
+  executor-service:
+    build: ./executor-service
+    restart: unless-stopped
+    depends_on: *after-migrations
+    environment:
+      DATABASE_DSN: *mysql-dsn
+    # Longer than SHUTDOWN_GRACE_PERIOD (30 s), so requests in flight can finish and save before the kill.
+    stop_grace_period: 40s
+
+  reconciler-service:
+    build: ./reconciler-service
+    restart: unless-stopped
+    depends_on: *after-migrations
+    environment:
+      DATABASE_DSN: *mysql-dsn
+
+  archiver-service:
+    build: ./archiver-service
+    restart: unless-stopped
+    depends_on:
+      <<: *after-migrations
+      migrate-cassandra:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_DSN: *mysql-dsn
+      CASSANDRA_HOSTS: cassandra
+
+volumes:
+  mysql-data:
+  cassandra-data:
