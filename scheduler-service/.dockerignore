@@ -1,0 +1,6 @@
+# Only the Go sources reach the build. The local env files hold secrets.
+.env*
+*.md
+docs/
+migrations/
+test/
