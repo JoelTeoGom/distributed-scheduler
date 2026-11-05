@@ -2,7 +2,7 @@
 
 ![architecture](docs/distributed-scheduler.png)
 
-*The target design. [How it works](#how-it-works) describes what is built, and [To do](#to-do) what is not yet.*
+*Drawn from [docs/diagram](docs/diagram): edit `draw.mjs` and run `render.sh` to export it again.*
 
 A distributed job scheduler in Go: `at` and `cron` as a service. Users schedule HTTP calls to their own endpoints (once, at a given time, or on a cron expression) with priorities, automatic retries, a dead letter queue and a queryable execution history.
 
