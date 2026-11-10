@@ -1,4 +1,4 @@
-# MySQL and Cassandra run outside the cluster (bench/compose.db.yml), like RDS and a managed Cassandra.
+# MySQL and Cassandra run outside the cluster (bench/infra/databases/compose.yml), like RDS and a managed Cassandra.
 # Services without a selector plus an EndpointSlice give them in-cluster names: mysql:3306 and cassandra:9042.
 # Both point at Toxiproxy (172.28.0.12), which forwards to the databases and adds the emulated latency.
 apiVersion: v1

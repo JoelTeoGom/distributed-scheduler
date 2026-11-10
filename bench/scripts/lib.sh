@@ -5,12 +5,12 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 CLUSTER=scheduler-bench
 NS=scheduler
-TARGET_URL=http://127.0.0.1:18090
+FAKE_ENDPOINT_URL=http://127.0.0.1:18090
 TOXIPROXY_URL=http://127.0.0.1:8474
-COMPOSE=(docker compose -f docker-compose.yml -f bench/compose.db.yml)
+COMPOSE=(docker compose -f docker-compose.yml -f bench/infra/databases/compose.yml)
 # Off by default: the WSL kernel has no BLK_DEV_THROTTLING, so Docker accepts the cap and silently drops it.
 if [[ "${DISK_CAP:-0}" == "1" ]]; then
-  COMPOSE+=(-f bench/compose.disk.yml)
+  COMPOSE+=(-f bench/infra/databases/compose.disk-cap.yml)
 fi
 
 # mysql "<sql>" runs SQL as the app user against the benchmark database.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Brings up the whole bench: databases and Toxiproxy in compose, a k3d cluster with the six services and the fake target, and the emulated latency.
+# Brings up the whole bench: databases and Toxiproxy in compose, a k3d cluster with the six services and the fake endpoint, and the emulated latency.
 #   bench/scripts/up.sh                       # 1 ms latency, no disk cap
 #   LATENCY=off bench/scripts/up.sh
 #   DISK_CAP=1 bench/scripts/up.sh            # only on a kernel with BLK_DEV_THROTTLING (not the stock WSL one)
@@ -19,25 +19,25 @@ log "databases and Toxiproxy (compose) and migrations"
 "${COMPOSE[@]}" run --rm migrate-cassandra
 
 log "images"
-docker compose -f bench/compose.build.yml build --quiet
+docker compose -f bench/infra/kubernetes/compose.build.yml build --quiet
 
 log "k3d cluster"
 if ! k3d cluster list "$CLUSTER" >/dev/null 2>&1; then
-  k3d cluster create --config bench/k3d.yaml
+  k3d cluster create --config bench/infra/kubernetes/k3d.yaml
 fi
 # mysql:8.4 is already here from compose; latency.sh runs its client in a pod to measure the round trip.
-IMAGES=(scheduler/target:bench mysql:8.4)
+IMAGES=(scheduler/fake-endpoint:bench mysql:8.4)
 for s in "${SERVICES[@]}"; do IMAGES+=("scheduler/$s:bench"); done
 k3d image import -c "$CLUSTER" "${IMAGES[@]}"
 
 log "manifests"
-kubectl apply -f bench/k8s/namespace.yaml
+kubectl apply -f bench/infra/kubernetes/manifests/namespace.yaml
 kubectl -n "$NS" create secret generic scheduler-env \
   --from-literal=DATABASE_DSN='scheduler:scheduler@tcp(mysql:3306)/scheduler?parseTime=true&loc=UTC&time_zone=%27%2B00%3A00%27' \
   --from-literal=JWT_SECRET="$JWT_SECRET" \
   --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f bench/k8s/databases.yaml -f bench/k8s/services.yaml -f bench/k8s/target.yaml
-for d in "${SERVICES[@]}" target; do
+kubectl apply -f bench/infra/kubernetes/manifests/databases.yaml -f bench/infra/kubernetes/manifests/services.yaml -f bench/infra/kubernetes/manifests/fake-endpoint.yaml
+for d in "${SERVICES[@]}" fake-endpoint; do
   kubectl -n "$NS" rollout status "deploy/$d" --timeout=180s
 done
 
@@ -46,4 +46,4 @@ bench/scripts/durability.sh
 
 log "ready"
 kubectl -n "$NS" get pods -o wide
-curl -fsS -X POST "$TARGET_URL/reset" && echo "target reachable on $TARGET_URL"
+curl -fsS -X POST "$FAKE_ENDPOINT_URL/reset" && echo "fake endpoint reachable on $FAKE_ENDPOINT_URL"

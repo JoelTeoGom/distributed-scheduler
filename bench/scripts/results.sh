@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Prints the results of a run: correctness and throughput, completion lag per priority, start lag from the target, MySQL rates.
+# Prints the results of a run: correctness and throughput, completion lag per priority, start lag from the fake endpoint, MySQL rates.
 #   bench/scripts/results.sh RUN
 source "$(dirname "$0")/lib.sh"
 
 RUN="$1"
-OUT="bench/results/run-$RUN"
+OUT="bench/results/early-runs/run-$RUN"
 TENANT="$(tenant_sql "$RUN")"
 
 log "run $RUN: correctness and throughput (MySQL)"
@@ -36,8 +36,8 @@ SELECT priority, COUNT(*) AS jobs,
        ROUND(MAX(s), 3)                               AS max_s
 FROM completion GROUP BY priority ORDER BY priority;" # not "lag": a reserved word since MySQL 8
 
-log "run $RUN: start lag, request arrival - X-Scheduled-At, first attempts (target)"
-curl -fsS "$TARGET_URL/stats" | tee "$OUT/target-stats.json"
+log "run $RUN: start lag, request arrival - X-Scheduled-At, first attempts (fake endpoint)"
+curl -fsS "$FAKE_ENDPOINT_URL/stats" | tee "$OUT/fake-endpoint-stats.json"
 
 if [[ -f "$OUT/mysql-before.txt" && -f "$OUT/mysql-after.txt" ]]; then
   log "run $RUN: MySQL per second over the run"

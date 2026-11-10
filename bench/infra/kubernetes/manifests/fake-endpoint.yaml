@@ -1,20 +1,20 @@
-# Fake tenant endpoint (bench/target). Big enough that it is never the bottleneck: check its CPU in `kubectl top`.
+# Fake tenant endpoint (bench/fake-endpoint). Big enough that it is never the bottleneck: check its CPU in `kubectl top`.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: target
+  name: fake-endpoint
   namespace: scheduler
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: target }
+    matchLabels: { app: fake-endpoint }
   template:
     metadata:
-      labels: { app: target }
+      labels: { app: fake-endpoint }
     spec:
       containers:
-        - name: target
-          image: scheduler/target:bench
+        - name: fake-endpoint
+          image: scheduler/fake-endpoint:bench
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -25,11 +25,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: target
+  name: fake-endpoint
   namespace: scheduler
 spec:
   type: NodePort
-  selector: { app: target }
+  selector: { app: fake-endpoint }
   ports:
     - port: 8080
       targetPort: 8080

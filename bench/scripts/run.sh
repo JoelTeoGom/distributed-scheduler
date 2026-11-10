@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One experiment run, start to finish: reset the target, collect metrics, seed the tasks, wait, print and save the results.
+# One experiment run, start to finish: reset the fake endpoint, collect metrics, seed the tasks, wait, print and save the results.
 #   bench/scripts/run.sh RUN RATE DURATION [LAT_MS] [ERR] [MODE]
 #   bench/scripts/run.sh 1 100 120              # 100 jobs/s for 120 s, endpoints take 50 ms, no errors
 #   bench/scripts/run.sh 3 100 120 1000         # slow endpoints (1 s)
@@ -9,7 +9,7 @@ source "$(dirname "$0")/lib.sh"
 
 RUN="$1" RATE="$2" DURATION="$3" LAT="${4:-50}" ERR="${5:-0}" MODE="${6:-steady}"
 LEAD=60 # seconds between seeding and the first due job: longer than the scheduler's 30 s lookahead
-OUT="bench/results/run-$RUN"
+OUT="bench/results/early-runs/run-$RUN"
 mkdir -p "$OUT"
 
 {
@@ -20,7 +20,7 @@ mkdir -p "$OUT"
   kubectl -n "$NS" get deploy executor-service -o jsonpath='executors={.spec.replicas} workers={.spec.template.spec.containers[0].env[?(@.name=="WORKER_COUNT")].value}{"\n"}'
 } | tee "$OUT/run.txt"
 
-curl -fsS -X POST "$TARGET_URL/reset"
+curl -fsS -X POST "$FAKE_ENDPOINT_URL/reset"
 bench/scripts/collect.sh "$RUN" &
 COLLECTOR=$!
 trap 'kill $COLLECTOR 2>/dev/null || true' EXIT

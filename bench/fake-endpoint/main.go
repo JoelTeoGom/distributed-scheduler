@@ -182,7 +182,7 @@ func main() {
 	if v := os.Getenv("ADDR"); v != "" {
 		addr = v
 	}
-	log.Printf("target listening on %s", addr)
+	log.Printf("fake endpoint listening on %s", addr)
 	server := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	log.Fatal(server.ListenAndServe())
 }

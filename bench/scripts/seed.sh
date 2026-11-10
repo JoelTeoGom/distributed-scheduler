@@ -26,7 +26,7 @@ WITH RECURSIVE n (i) AS (
 )
 SELECT UUID_TO_BIN(UUID()), $(tenant_sql "$RUN"), CONCAT('bench-$RUN-', i), 'at',
        @start + INTERVAL $OFFSET SECOND, 'UTC', i % 4,
-       'POST', CONCAT('http://target:8080/t?lat=$LAT&dist=lognormal&err=$ERR&p=', i % 4),
+       'POST', CONCAT('http://fake-endpoint:8080/t?lat=$LAT&dist=lognormal&err=$ERR&p=', i % 4),
        10, 3, 1,
        'active', @start + INTERVAL $OFFSET SECOND, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3)
 FROM n;

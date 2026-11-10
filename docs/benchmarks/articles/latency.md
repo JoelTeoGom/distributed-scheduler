@@ -19,8 +19,8 @@ Toxiproxy  172.28.0.12     +1 ms on every reply (downstream)
 MySQL      172.28.0.10
 ```
 
-- [`bench/k8s/databases.yaml`](../../../bench/k8s/databases.yaml): the `mysql` and `cassandra` Services, with EndpointSlices that point at Toxiproxy instead of a pod.
-- [`bench/toxiproxy.json`](../../../bench/toxiproxy.json): one proxy per database, `:3306 → 172.28.0.10:3306` and `:9042 → 172.28.0.11:9042`.
+- [`bench/infra/kubernetes/manifests/databases.yaml`](../../../bench/infra/kubernetes/manifests/databases.yaml): the `mysql` and `cassandra` Services, with EndpointSlices that point at Toxiproxy instead of a pod.
+- [`bench/infra/databases/toxiproxy.json`](../../../bench/infra/databases/toxiproxy.json): one proxy per database, `:3306 → 172.28.0.10:3306` and `:9042 → 172.28.0.11:9042`.
 - [`bench/scripts/latency.sh`](../../../bench/scripts/latency.sh): adds or removes a `latency` toxic on both proxies through Toxiproxy's API (`127.0.0.1:8474`), live.
 
 ## Why not `tc netem`
