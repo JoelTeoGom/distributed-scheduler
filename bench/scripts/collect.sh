@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Samples resources every 5 s until killed (bench/run.sh starts and stops it):
+# Samples resources every 5 s until killed (bench/scripts/run.sh starts and stops it):
 #   pods.csv   CPU and memory of every pod (metrics-server, bundled with k3s)
 #   dbs.csv    CPU and memory of the MySQL and Cassandra containers
 #   iostat.txt disk latency and queue in WSL, if sysstat is installed

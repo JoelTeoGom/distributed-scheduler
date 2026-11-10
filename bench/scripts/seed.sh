@@ -2,7 +2,7 @@
 # Inserts `at` tasks straight into MySQL: RATE per second for DURATION seconds, the first one due 60 s from now.
 # It bypasses the Task API on purpose: the API is not under test, and SQL creates 100,000 tasks in seconds.
 # Every job is due on a whole second (X-Scheduled-At has second precision) and priorities 0-3 are mixed evenly.
-#   bench/seed.sh RUN RATE DURATION [LAT_MS] [ERR] [steady|burst]
+#   bench/scripts/seed.sh RUN RATE DURATION [LAT_MS] [ERR] [steady|burst]
 source "$(dirname "$0")/lib.sh"
 
 RUN="$1" RATE="$2" DURATION="$3" LAT="${4:-50}" ERR="${5:-0}" MODE="${6:-steady}"

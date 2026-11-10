@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prints the results of a run: correctness and throughput, completion lag per priority, start lag from the target, MySQL rates.
-#   bench/results.sh RUN
+#   bench/scripts/results.sh RUN
 source "$(dirname "$0")/lib.sh"
 
 RUN="$1"

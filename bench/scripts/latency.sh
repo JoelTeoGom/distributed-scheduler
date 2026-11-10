@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Emulated network latency on everything MySQL and Cassandra send back (so every round trip to them pays it).
-#   bench/latency.sh 1ms     # ~ app and database in different AZs
-#   bench/latency.sh off
+#   bench/scripts/latency.sh 1ms     # ~ app and database in different AZs
+#   bench/scripts/latency.sh off
 # The pods reach both databases through Toxiproxy (bench/compose.db.yml): this adds or removes a latency toxic,
 # downstream (database -> pod), on both proxies through its HTTP API. The WSL kernel has no netem, so no tc.
 source "$(dirname "$0")/lib.sh"
