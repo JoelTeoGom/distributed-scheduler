@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prints the results of a run: correctness and throughput, completion lag per priority, start lag from the target, MySQL rates.
-#   bench/results.sh RUN
+#   bench/scripts/results.sh RUN
 source "$(dirname "$0")/lib.sh"
 
 RUN="$1"
@@ -22,7 +22,7 @@ WHERE tenant_id = $TENANT;"
 
 log "run $RUN: completion lag, finished_at - scheduled_at, includes the call (MySQL)"
 mysql "
-WITH lag AS (
+WITH completion AS (
     SELECT priority,
            TIMESTAMPDIFF(MICROSECOND, scheduled_at, finished_at) / 1e6 AS s,
            PERCENT_RANK() OVER (PARTITION BY priority
@@ -34,7 +34,7 @@ SELECT priority, COUNT(*) AS jobs,
        ROUND(MAX(CASE WHEN pr <= 0.50 THEN s END), 3) AS p50_s,
        ROUND(MAX(CASE WHEN pr <= 0.99 THEN s END), 3) AS p99_s,
        ROUND(MAX(s), 3)                               AS max_s
-FROM lag GROUP BY priority ORDER BY priority;"
+FROM completion GROUP BY priority ORDER BY priority;" # not "lag": a reserved word since MySQL 8
 
 log "run $RUN: start lag, request arrival - X-Scheduled-At, first attempts (target)"
 curl -fsS "$TARGET_URL/stats" | tee "$OUT/target-stats.json"

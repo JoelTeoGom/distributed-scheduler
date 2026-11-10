@@ -1,11 +1,12 @@
-# A small EKS in Docker: 1 control plane and 2 worker nodes with 4 GB each.
+# A small EKS in Docker: 1 control plane and 3 worker nodes with 4 GB each.
 # It joins the compose network, so the pods reach MySQL and Cassandra by IP, like an RDS inside the VPC.
+# 3 workers, not 2: 7 pods of 1 GiB plus the target do not fit in 2 × 4 GB, and E2 adds up to 3 executors.
 apiVersion: k3d.io/v1alpha5
 kind: Simple
 metadata:
   name: scheduler-bench
 servers: 1
-agents: 2
+agents: 3
 network: distributed-scheduler_default
 ports:
   - port: 8080:30080 # task-service
@@ -20,6 +21,9 @@ options:
   k3s:
     extraArgs:
       - arg: --disable=traefik # no ingress needed; NodePorts are enough
+        nodeFilters: [server:*]
+      # Like EKS, the control plane runs no workloads: the server has no memory cap and would skew the numbers.
+      - arg: --node-taint=CriticalAddonsOnly=true:NoExecute
         nodeFilters: [server:*]
       # Docker in WSL runs on cgroup v1, and since Kubernetes 1.35 the kubelet refuses to start on it by default.
       - arg: --kubelet-arg=fail-cgroupv1=false

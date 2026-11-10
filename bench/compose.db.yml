@@ -34,7 +34,7 @@ services:
       default:
         ipv4_address: 172.28.0.11
 
-  # Emulated network latency between the pods and the databases (bench/latency.sh adds and removes it).
+  # Emulated network latency between the pods and the databases (bench/scripts/latency.sh adds and removes it).
   # The WSL kernel has no netem, so a TCP proxy does it: mysql:3306 and cassandra:9042, API on 8474.
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.12.0

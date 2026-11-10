@@ -1,7 +1,7 @@
 # shellcheck shell=bash disable=SC2034
 # Shared by the bench scripts. Run them from anywhere; they cd to the repo root.
 set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 CLUSTER=scheduler-bench
 NS=scheduler

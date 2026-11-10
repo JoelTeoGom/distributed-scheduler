@@ -1,4 +1,4 @@
-# Only builds and tags the bench images (bench/up.sh); nothing here is ever started.
+# Only builds and tags the bench images (bench/scripts/up.sh); nothing here is ever started.
 # The Dockerfiles need BuildKit, and plain `docker build` falls back to the legacy builder when the buildx
 # plugin is missing (as with Ubuntu's docker.io package). Compose has BuildKit built in.
 #   docker compose -f bench/compose.build.yml build

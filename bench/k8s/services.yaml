@@ -1,5 +1,5 @@
 # Every service is a Deployment sized like a Fargate task (0.5 vCPU / 1 GB, requests = limits).
-# Images are built locally and imported with `k3d image import` (see bench/up.sh).
+# Images are built locally and imported with `k3d image import` (see bench/scripts/up.sh).
 apiVersion: apps/v1
 kind: Deployment
 metadata:

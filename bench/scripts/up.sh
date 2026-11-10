@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Brings up the whole bench: databases and Toxiproxy in compose, a k3d cluster with the six services and the fake target, and the emulated latency.
-#   bench/up.sh                       # 1 ms latency, no disk cap
-#   LATENCY=off bench/up.sh
-#   DISK_CAP=1 bench/up.sh            # only on a kernel with BLK_DEV_THROTTLING (not the stock WSL one)
-#   DISK_DEVICE=/dev/sdd bench/up.sh  # with DISK_CAP=1, if Docker's data is not on /dev/sdc (`df /var/lib/docker`)
+#   bench/scripts/up.sh                       # 1 ms latency, no disk cap
+#   LATENCY=off bench/scripts/up.sh
+#   DISK_CAP=1 bench/scripts/up.sh            # only on a kernel with BLK_DEV_THROTTLING (not the stock WSL one)
+#   DISK_DEVICE=/dev/sdd bench/scripts/up.sh  # with DISK_CAP=1, if Docker's data is not on /dev/sdc (`df /var/lib/docker`)
 source "$(dirname "$0")/lib.sh"
 
 SERVICES=(task-service job-service scheduler-service executor-service reconciler-service archiver-service)
@@ -41,8 +41,8 @@ for d in "${SERVICES[@]}" target; do
   kubectl -n "$NS" rollout status "deploy/$d" --timeout=180s
 done
 
-bench/latency.sh "${LATENCY:-1ms}"
-bench/durability.sh
+bench/scripts/latency.sh "${LATENCY:-1ms}"
+bench/scripts/durability.sh
 
 log "ready"
 kubectl -n "$NS" get pods -o wide
