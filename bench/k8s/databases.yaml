@@ -1,0 +1,50 @@
+# MySQL and Cassandra run outside the cluster (bench/compose.db.yml), like RDS and a managed Cassandra.
+# Services without a selector plus an EndpointSlice give them in-cluster names: mysql:3306 and cassandra:9042.
+# Both point at Toxiproxy (172.28.0.12), which forwards to the databases and adds the emulated latency.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: scheduler
+spec:
+  ports:
+    - name: mysql
+      port: 3306
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: mysql-external
+  namespace: scheduler
+  labels:
+    kubernetes.io/service-name: mysql
+addressType: IPv4
+ports:
+  - name: mysql
+    port: 3306
+endpoints:
+  - addresses: ["172.28.0.12"] # toxiproxy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra
+  namespace: scheduler
+spec:
+  ports:
+    - name: cql
+      port: 9042
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: cassandra-external
+  namespace: scheduler
+  labels:
+    kubernetes.io/service-name: cassandra
+addressType: IPv4
+ports:
+  - name: cql
+    port: 9042
+endpoints:
+  - addresses: ["172.28.0.12"] # toxiproxy

@@ -1,0 +1,4 @@
+[
+  { "name": "mysql", "listen": "0.0.0.0:3306", "upstream": "172.28.0.10:3306", "enabled": true },
+  { "name": "cassandra", "listen": "0.0.0.0:9042", "upstream": "172.28.0.11:9042", "enabled": true }
+]

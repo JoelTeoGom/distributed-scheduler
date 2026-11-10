@@ -1,0 +1,48 @@
+# Databases for the benchmarks, sized like their AWS counterparts. Used on top of the root compose file,
+# starting only the databases, Toxiproxy and the migrations (the services run in k3d):
+#   docker compose -f docker-compose.yml -f bench/compose.db.yml up -d mysql cassandra toxiproxy migrate-tasks migrate-jobs migrate-cassandra
+#
+# Fixed IPs. The pods reach the databases through Toxiproxy (bench/k8s/databases.yaml), which adds the emulated latency.
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          ip_range: 172.28.128.0/17 # dynamic IPs (migrations, k3d nodes) come from here, never .10 or .11
+
+services:
+  # RDS db.t4g.medium: 2 vCPU / 4 GB. RDS sizes the buffer pool at ~75% of RAM; the 128 MB default is not realistic.
+  # Durability stays at the RDS defaults: innodb_flush_log_at_trx_commit=1, binlog on, sync_binlog=1.
+  mysql:
+    command: ["--innodb-buffer-pool-size=3G", "--max-connections=500"]
+    cpus: 2
+    mem_limit: 4g
+    networks:
+      default:
+        ipv4_address: 172.28.0.10
+
+  # One small node: 2 vCPU / 2 GB, heap 512 MB as in the root compose file.
+  # gocql discovers nodes from system.local and connects to the address found there: announce Toxiproxy's,
+  # or the services would skip the proxy and its latency.
+  cassandra:
+    cpus: 2
+    mem_limit: 2g
+    environment:
+      CASSANDRA_BROADCAST_RPC_ADDRESS: 172.28.0.12
+    networks:
+      default:
+        ipv4_address: 172.28.0.11
+
+  # Emulated network latency between the pods and the databases (bench/latency.sh adds and removes it).
+  # The WSL kernel has no netem, so a TCP proxy does it: mysql:3306 and cassandra:9042, API on 8474.
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    command: ["-host=0.0.0.0", "-config=/toxiproxy.json"]
+    volumes:
+      - ./bench/toxiproxy.json:/toxiproxy.json:ro # relative to the root compose file
+    ports:
+      - "127.0.0.1:8474:8474"
+    networks:
+      default:
+        ipv4_address: 172.28.0.12

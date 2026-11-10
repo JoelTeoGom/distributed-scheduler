@@ -1,0 +1,193 @@
+# Every service is a Deployment sized like a Fargate task (0.5 vCPU / 1 GB, requests = limits).
+# Images are built locally and imported with `k3d image import` (see bench/up.sh).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-service
+  namespace: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: task-service }
+  template:
+    metadata:
+      labels: { app: task-service }
+    spec:
+      containers:
+        - name: task-service
+          image: scheduler/task-service:bench
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: scheduler-env }
+          env:
+            - { name: GOMEMLIMIT, value: "900MiB" }
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /health, port: 8080 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 500m, memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-service
+  namespace: scheduler
+spec:
+  type: NodePort
+  selector: { app: task-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-service
+  namespace: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: job-service }
+  template:
+    metadata:
+      labels: { app: job-service }
+    spec:
+      containers:
+        - name: job-service
+          image: scheduler/job-service:bench
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: scheduler-env }
+          env:
+            - { name: CASSANDRA_HOSTS, value: "cassandra" }
+            - { name: GOMEMLIMIT, value: "900MiB" }
+          ports:
+            - containerPort: 8081
+          readinessProbe:
+            httpGet: { path: /health, port: 8081 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 500m, memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: job-service
+  namespace: scheduler
+spec:
+  type: NodePort
+  selector: { app: job-service }
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler-service
+  namespace: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: scheduler-service }
+  template:
+    metadata:
+      labels: { app: scheduler-service }
+    spec:
+      containers:
+        - name: scheduler-service
+          image: scheduler/scheduler-service:bench
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: scheduler-env }
+          env:
+            - { name: GOMEMLIMIT, value: "900MiB" }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 500m, memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: executor-service
+  namespace: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: executor-service }
+  template:
+    metadata:
+      labels: { app: executor-service }
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+        - name: executor-service
+          image: scheduler/executor-service:bench
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: scheduler-env }
+          env:
+            - { name: WORKER_COUNT, value: "50" }
+            - { name: ALLOW_PRIVATE_DESTINATIONS, value: "true" }
+            - { name: GOMEMLIMIT, value: "900MiB" }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 500m, memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reconciler-service
+  namespace: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: reconciler-service }
+  template:
+    metadata:
+      labels: { app: reconciler-service }
+    spec:
+      containers:
+        - name: reconciler-service
+          image: scheduler/reconciler-service:bench
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: scheduler-env }
+          env:
+            - { name: GOMEMLIMIT, value: "900MiB" }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 500m, memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archiver-service
+  namespace: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: archiver-service }
+  template:
+    metadata:
+      labels: { app: archiver-service }
+    spec:
+      containers:
+        - name: archiver-service
+          image: scheduler/archiver-service:bench
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: scheduler-env }
+          env:
+            - { name: CASSANDRA_HOSTS, value: "cassandra" }
+            - { name: SUCCEEDED_RETENTION, value: "1h" }
+            - { name: GOMEMLIMIT, value: "900MiB" }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 500m, memory: 1Gi }
