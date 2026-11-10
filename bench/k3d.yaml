@@ -1,0 +1,26 @@
+# A small EKS in Docker: 1 control plane and 2 worker nodes with 4 GB each.
+# It joins the compose network, so the pods reach MySQL and Cassandra by IP, like an RDS inside the VPC.
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: scheduler-bench
+servers: 1
+agents: 2
+network: distributed-scheduler_default
+ports:
+  - port: 8080:30080 # task-service
+    nodeFilters: [loadbalancer]
+  - port: 8081:30081 # job-service
+    nodeFilters: [loadbalancer]
+  - port: 18090:30090 # fake target: /stats and /reset
+    nodeFilters: [loadbalancer]
+options:
+  runtime:
+    agentsMemory: "4g"
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik # no ingress needed; NodePorts are enough
+        nodeFilters: [server:*]
+      # Docker in WSL runs on cgroup v1, and since Kubernetes 1.35 the kubelet refuses to start on it by default.
+      - arg: --kubelet-arg=fail-cgroupv1=false
+        nodeFilters: [server:*, agent:*]

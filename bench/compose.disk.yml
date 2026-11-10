@@ -1,0 +1,13 @@
+# gp3 baseline for the MySQL disk: 3,000 IOPS and 125 MB/s. Applied by up.sh when DISK_CAP=1 (off by default).
+# It needs a kernel with BLK_DEV_THROTTLING. The stock WSL kernel has none: Docker accepts the cap, warns in
+# `docker info` ("No blkio throttle...") and drops it, so `docker inspect` shows a cap that is not applied.
+# DISK_DEVICE is the block device that holds Docker's data in WSL: `df /var/lib/docker` (usually /dev/sdc).
+services:
+  mysql:
+    blkio_config:
+      device_read_iops:
+        - { path: "${DISK_DEVICE:-/dev/sdc}", rate: 3000 }
+      device_write_iops:
+        - { path: "${DISK_DEVICE:-/dev/sdc}", rate: 3000 }
+      device_write_bps:
+        - { path: "${DISK_DEVICE:-/dev/sdc}", rate: 125mb }
