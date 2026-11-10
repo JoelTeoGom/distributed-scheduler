@@ -7,7 +7,7 @@
 source "$(dirname "$0")/lib.sh"
 
 RUN="$1"
-OUT="bench/results/run-$RUN"
+OUT="bench/results/early-runs/run-$RUN"
 mkdir -p "$OUT"
 
 STATUS="SHOW GLOBAL STATUS WHERE Variable_name IN

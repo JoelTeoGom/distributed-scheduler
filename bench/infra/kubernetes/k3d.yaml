@@ -1,6 +1,6 @@
 # A small EKS in Docker: 1 control plane and 3 worker nodes with 4 GB each.
 # It joins the compose network, so the pods reach MySQL and Cassandra by IP, like an RDS inside the VPC.
-# 3 workers, not 2: 7 pods of 1 GiB plus the target do not fit in 2 × 4 GB, and E2 adds up to 3 executors.
+# 3 workers, not 2: 7 pods of 1 GiB plus the fake endpoint do not fit in 2 × 4 GB, and E2 adds up to 3 executors.
 apiVersion: k3d.io/v1alpha5
 kind: Simple
 metadata:
@@ -13,7 +13,7 @@ ports:
     nodeFilters: [loadbalancer]
   - port: 8081:30081 # job-service
     nodeFilters: [loadbalancer]
-  - port: 18090:30090 # fake target: /stats and /reset
+  - port: 18090:30090 # fake endpoint: /stats and /reset
     nodeFilters: [loadbalancer]
 options:
   runtime:

@@ -45,7 +45,7 @@ Before P1, a calibration round checks that the bench itself measures well and is
 | executor-service | | a worker node | 0.5 vCPU | 1 GiB |
 | scheduler-service | | a worker node | 0.5 vCPU | 1 GiB |
 | reconciler, archiver, task-service, job-service | | worker nodes | 0.5 vCPU each | 1 GiB each |
-| target (fake endpoint) | customers' APIs | a worker node | 2 vCPU | 512 MiB |
+| fake-endpoint | customers' APIs | a worker node | 2 vCPU | 512 MiB |
 | MySQL 8.4 | RDS `db.t4g.medium` | docker compose | 2 vCPU | 4 GB (3 GB buffer pool) |
 | Cassandra 5 | a small Cassandra node | docker compose | 2 vCPU | 2 GB |
 | Toxiproxy | the network between AZs | docker compose | | |
@@ -156,8 +156,18 @@ Open question from E1: 16% of the jobs were claimed on time but reached the endp
 
 ## 6. Running it
 
+```text
+bench/
+├── infra/
+│   ├── kubernetes/      the cluster (plays EKS): k3d.yaml, the manifests, the image build
+│   └── databases/       MySQL, Cassandra and Toxiproxy in docker compose (plays RDS)
+├── fake-endpoint/       the Go service the jobs call, in place of the customers' APIs
+├── scripts/             bring the platform up and down, seed, run, measure
+└── results/             one folder per test, P0 to P9
+```
+
 ```bash
-cp .env.example .env    # set JWT_SECRET
+cp .env.example .env            # set JWT_SECRET
 bench/scripts/up.sh             # databases, Toxiproxy, k3d cluster, images, 1 ms latency
 bench/scripts/run.sh 1 50 120   # run 1: 50 jobs/s for 120 s
 bench/scripts/down.sh           # delete everything except bench/results

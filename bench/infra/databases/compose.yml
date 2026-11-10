@@ -1,8 +1,8 @@
 # Databases for the benchmarks, sized like their AWS counterparts. Used on top of the root compose file,
 # starting only the databases, Toxiproxy and the migrations (the services run in k3d):
-#   docker compose -f docker-compose.yml -f bench/compose.db.yml up -d mysql cassandra toxiproxy migrate-tasks migrate-jobs migrate-cassandra
+#   docker compose -f docker-compose.yml -f bench/infra/databases/compose.yml up -d mysql cassandra toxiproxy migrate-tasks migrate-jobs migrate-cassandra
 #
-# Fixed IPs. The pods reach the databases through Toxiproxy (bench/k8s/databases.yaml), which adds the emulated latency.
+# Fixed IPs. The pods reach the databases through Toxiproxy (bench/infra/kubernetes/manifests/databases.yaml), which adds the emulated latency.
 
 networks:
   default:
@@ -40,7 +40,7 @@ services:
     image: ghcr.io/shopify/toxiproxy:2.12.0
     command: ["-host=0.0.0.0", "-config=/toxiproxy.json"]
     volumes:
-      - ./bench/toxiproxy.json:/toxiproxy.json:ro # relative to the root compose file
+      - ./bench/infra/databases/toxiproxy.json:/toxiproxy.json:ro # relative to the root compose file
     ports:
       - "127.0.0.1:8474:8474"
     networks:

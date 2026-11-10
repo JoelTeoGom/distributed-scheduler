@@ -250,9 +250,9 @@
     L1528.6978047956693 760.8052219595809 Q1530 772 1520.9654949832386 773.0741866920835
     L1303.4557363952097 772.1616095067576 Q1294 772 1294.1709897659448 763.0250058541308
     L1292.8733933088122 684.7213609793422 Q1294 676 1303.9140007683206 675.4109247939763 Z" fill="none" stroke="#e8590c" stroke-width="2"/>
-<text x="1310" y="708" font-size="19" fill="#e8590c" text-anchor="start" xml:space="preserve">target</text>
+<text x="1310" y="708" font-size="19" fill="#e8590c" text-anchor="start" xml:space="preserve">fake-endpoint</text>
 <text x="1310" y="734" font-size="15" fill="#495057" text-anchor="start" xml:space="preserve">2 vCPU · 512 MiB</text>
-<text x="1310" y="754.25" font-size="15" fill="#495057" text-anchor="start" xml:space="preserve">fake customer endpoint</text>
+<text x="1310" y="754.25" font-size="15" fill="#495057" text-anchor="start" xml:space="preserve">plays the customers' APIs</text>
 <path d="M1304.091297682646 791.6401562123002 L1520.105467641452 792.1946537511374 Q1530 792 1530.3455985376104 802.4746236101488
     L1530.599016751907 835.6745493056947 Q1530 846 1519.7501880531668 846.2106162229652
     L1303.8268624227744 846.0767456202551 Q1294 846 1293.863643722668 836.2600526432135
@@ -335,7 +335,7 @@
     L114.38024909941502 1251.246621849245 Q100 1250 99.57342146092414 1237.2945080473037
     L100.79675185791845 1152.608480755434 Q100 1140 115.13607842469223 1140.8700858675595 Z" fill="none" stroke="#1e1e1e" stroke-width="2"/>
 <text x="124" y="1180" font-size="21" fill="#1e1e1e" text-anchor="start" xml:space="preserve">bench/scripts · run in WSL</text>
-<text x="124" y="1218" font-size="16" fill="#495057" text-anchor="start" xml:space="preserve">up.sh builds it all · seed.sh writes the tasks into MySQL · latency.sh talks to Toxiproxy · collect.sh samples CPU, memory and disk · results.sh reads MySQL and the target</text>
+<text x="124" y="1218" font-size="16" fill="#495057" text-anchor="start" xml:space="preserve">up.sh builds it all · seed.sh writes the tasks into MySQL · latency.sh talks to Toxiproxy · collect.sh samples CPU, memory and disk · results.sh reads MySQL and the fake endpoint</text>
 <path d="M57.628505808886615 1319.897137560227 L652.3909802373415 1320.0048506336332 Q670 1320 669.9246041304662 1338.02162602937
     L669.8686801478906 1471.7072513210655 Q670 1490 651.7729601340117 1490.1409788064109
     L57.4308029398609 1489.9050193923572 Q40 1490 39.6609327866332 1472.0973522934107

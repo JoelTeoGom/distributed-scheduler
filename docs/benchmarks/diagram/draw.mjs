@@ -133,7 +133,7 @@ const nodes = [
   ] },
   { name: "node-2", role: "worker · 4 GB RAM", color: C.blue, pods: [
     ["scheduler", ["0.5 vCPU · 1 GiB", "tasks -> jobs"]],
-    ["target", ["2 vCPU · 512 MiB", "fake customer endpoint"], { color: C.orange, fill: C.orangeFill }],
+    ["fake-endpoint", ["2 vCPU · 512 MiB", "plays the customers' APIs"], { color: C.orange, fill: C.orangeFill }],
     ["coredns", "", { system: true }],
   ] },
   { name: "node-3", role: "worker · 4 GB RAM", color: C.blue, pods: [
@@ -154,7 +154,7 @@ text(680, 1040, "pod: 0.5 vCPU · 1 GiB = a Fargate task · pods are placed by K
 // Bench scripts, in WSL next to Docker
 box(100, 1140, 1840, 110, C.ink, { fill: "#fff", radius: 14 });
 text(124, 1180, "bench/scripts · run in WSL", { size: 21 });
-text(124, 1218, "up.sh builds it all · seed.sh writes the tasks into MySQL · latency.sh talks to Toxiproxy · collect.sh samples CPU, memory and disk · results.sh reads MySQL and the target", { size: 16, color: C.muted });
+text(124, 1218, "up.sh builds it all · seed.sh writes the tasks into MySQL · latency.sh talks to Toxiproxy · collect.sh samples CPU, memory and disk · results.sh reads MySQL and the fake endpoint", { size: 16, color: C.muted });
 
 // Notes
 note(40, 1320, 630, 170, "Why k3d", [

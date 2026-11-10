@@ -1,28 +1,28 @@
 # Only builds and tags the bench images (bench/scripts/up.sh); nothing here is ever started.
 # The Dockerfiles need BuildKit, and plain `docker build` falls back to the legacy builder when the buildx
 # plugin is missing (as with Ubuntu's docker.io package). Compose has BuildKit built in.
-#   docker compose -f bench/compose.build.yml build
+#   docker compose -f bench/infra/kubernetes/compose.build.yml build
 name: scheduler-bench-images
 
 services:
   task-service:
-    build: ../task-service
+    build: ../../../task-service
     image: scheduler/task-service:bench
   job-service:
-    build: ../job-service
+    build: ../../../job-service
     image: scheduler/job-service:bench
   scheduler-service:
-    build: ../scheduler-service
+    build: ../../../scheduler-service
     image: scheduler/scheduler-service:bench
   executor-service:
-    build: ../executor-service
+    build: ../../../executor-service
     image: scheduler/executor-service:bench
   reconciler-service:
-    build: ../reconciler-service
+    build: ../../../reconciler-service
     image: scheduler/reconciler-service:bench
   archiver-service:
-    build: ../archiver-service
+    build: ../../../archiver-service
     image: scheduler/archiver-service:bench
-  target:
-    build: ./target
-    image: scheduler/target:bench
+  fake-endpoint:
+    build: ../../fake-endpoint
+    image: scheduler/fake-endpoint:bench

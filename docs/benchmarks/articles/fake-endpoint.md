@@ -2,7 +2,7 @@
 
 > What the jobs call during a test: a small Go service that behaves like a customer's API and measures how late each call arrives.
 
-In production every job calls a customer's API. In the bench they all call [`bench/target`](../../../bench/target), one Deployment with 2 vCPU, big enough never to be the bottleneck. Each job carries in its URL how the endpoint must behave, so every test picks its scenario without touching the target.
+In production every job calls a customer's API. In the bench they all call [`bench/fake-endpoint`](../../../bench/fake-endpoint), one Deployment with 2 vCPU, big enough never to be the bottleneck. Each job carries in its URL how the endpoint must behave, so every test picks its scenario without touching the endpoint.
 
 | Route | What it does |
 |---|---|
@@ -15,4 +15,4 @@ In production every job calls a customer's API. In the bench they all call [`ben
 - **Start delay:** arrival time minus `X-Scheduled-At`, taken before sleeping, on first attempts only so retries do not mix in their backoff.
 - **Duplicates:** at-least-once delivery means a job may run twice after a failure. Counting 200s per `Idempotency-Key` shows how often it happens.
 
-The executor blocks private addresses to prevent SSRF. The target is a ClusterIP, so the bench runs the executor with `ALLOW_PRIVATE_DESTINATIONS=true`.
+The executor blocks private addresses to prevent SSRF. Its address is a ClusterIP, so the bench runs the executor with `ALLOW_PRIVATE_DESTINATIONS=true`.
