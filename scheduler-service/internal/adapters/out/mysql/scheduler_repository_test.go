@@ -32,6 +32,7 @@ const (
 	minimumLead       = 10 * time.Second
 	leadSpread        = 30 * time.Second
 	scheduleLookahead = 30 * time.Second
+	scheduleInterval  = 5 * time.Second
 	cronTaskEvery     = 5
 	seedBatchSize     = 500
 	drainTimeout      = 90 * time.Second
@@ -87,8 +88,8 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatal(err)
 	}
 
-	repository := &timedRepository{SchedulerRepository: mysql.NewSchedulerRepository(db)}
-	schedulerService := service.NewSchedulerService(repository, cron.NewCalculator())
+	repository := &timedRepository{SchedulerRepository: mysql.NewSchedulerRepository(db, scheduleLookahead)}
+	schedulerService := service.NewSchedulerService(repository, cron.NewCalculator(), scheduleInterval)
 
 	stopped := make(chan error, 1)
 	go func() { stopped <- schedulerService.Start(ctx) }()

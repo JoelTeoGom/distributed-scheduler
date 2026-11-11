@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os/signal"
 	"syscall"
 
@@ -26,10 +28,17 @@ func main() {
 		log.Fatalf("open database: %v", err)
 	}
 
-	schedulerRepository := mysql.NewSchedulerRepository(db)
+	if config.PprofAddr != "" {
+		go func() {
+			log.Printf("pprof listening on %s", config.PprofAddr)
+			log.Printf("pprof: %v", http.ListenAndServe(config.PprofAddr, nil))
+		}()
+	}
+
+	schedulerRepository := mysql.NewSchedulerRepository(db, config.ScheduleLookahead)
 	cron := cron.NewCalculator()
 
-	schedulerService := service.NewSchedulerService(schedulerRepository, cron)
+	schedulerService := service.NewSchedulerService(schedulerRepository, cron, config.ScheduleInterval)
 
 	schedulerErrors := make(chan error, 1)
 	go func() {
