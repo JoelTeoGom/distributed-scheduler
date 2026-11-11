@@ -8,6 +8,14 @@ A distributed job scheduler in Go: `at` and `cron` as a service. Users schedule 
 
 Designed for big tech scale (~1B executions/day, ~500k/s peak). Built and run here at a much smaller scale.
 
+> [!IMPORTANT]
+> **What the benchmarks showed.** The design held up, and its one limit is a simplification I chose. [All the tests and results](benchmarks.md).
+>
+> - **Nothing is lost.** 10 tests and ~260,000 jobs, with peaks, slow and hanging customers, an executor killed and MySQL cut for 30 s: every job ended `succeeded` or `dead`. Duplicates only came after a failure: 16 when MySQL disappeared.
+> - **The bottleneck is the scheduler, by design, not the hardware.** One scheduler creates about 300 jobs per second: each tick takes at most 1,000 tasks and advances each one with its own round trip to MySQL, so a tick lasts ~3.3 s while the scheduler uses a fifth of its CPU. That sets the capacity, the 6.7 s delay at every 5-minute burst and the 94 s of the 09:00 peak. More executors do not help: 301, 336 and 330 jobs/s with 1, 2 and 3.
+> - **The hardware had room left.** With 0.5 vCPU per service and 2 CPUs for MySQL (~2,500 commits/s at the peak), only the executor's CPU saturated, for a second or two at each burst, and executors scale out.
+> - **How it scales.** Inside one scheduler: larger batches, advanced with one statement instead of one per task. Polling more often does not help, because a tick already lasts longer than the interval. Beyond that: several schedulers, each owning a share of the tasks, and more shards. To keep it simple there is one scheduler per shard, and this deployment runs one shard, so that is where the limit showed first.
+
 ---
 
 ## Requirements
@@ -109,7 +117,7 @@ The scheduler creates jobs 30 s ahead, and executors claim them one polling inte
 Part of the design above is not built yet:
 
 - **A fast path for critical jobs:** inserted as `running` and executed at once instead of waiting for a claim. Today priority only orders the claim.
-- **Scheduler partitions:** each scheduler owns a set of tasks through a lease. Today one scheduler does all the work and a second one only adds availability.
+- **Scheduler partitions:** each scheduler owns a set of tasks through a lease. Today one scheduler does all the work and a second one only adds availability. The [benchmarks](benchmarks.md) found this to be the first limit, at about 300 jobs per second.
 - **Adaptive polling:** claim again at once when a batch comes back full, back off when empty. Today the interval is fixed.
 - **`Retry-After`** on `429` and `503`, and jitter on the backoff.
 - **Concurrency limits per tenant**, and the late-result refinements in [late results](docs/design/late-results.md).
@@ -117,7 +125,7 @@ Part of the design above is not built yet:
 
 ## Benchmarks
 
-The platform was load-tested on a small AWS-shaped deployment (k3d plus MySQL and Cassandra 1 ms away): capacity, a normal day, the 09:00 peak, slow and broken customers, an executor dying and MySQL disappearing. Nothing was lost in any test; the limit is the scheduler, at about 300 jobs per second. See [benchmarks.md](benchmarks.md).
+The platform was load-tested on a small AWS-shaped deployment (k3d plus MySQL and Cassandra 1 ms away): capacity, a normal day, the 09:00 peak, slow and broken customers, an executor dying and MySQL disappearing. The conclusions are [at the top](#distributed-job-scheduler); every test, with its charts, resources and CPU profiles, is in [benchmarks.md](benchmarks.md).
 
 ## Status
 
