@@ -12,9 +12,9 @@ Designed for big tech scale (~1B executions/day, ~500k/s peak). Built and run he
 > **What the benchmarks showed.** The design held up, and its one limit is a simplification I chose. [All the tests and results](benchmarks.md).
 >
 > - **Nothing is lost.** 10 tests and ~260,000 jobs, with peaks, slow and hanging customers, an executor killed and MySQL cut for 30 s: every job ended `succeeded` or `dead`. Duplicates only came after a failure: 16 when MySQL disappeared.
-> - **The bottleneck is the scheduler, by design, not the hardware.** One scheduler creates about 300 jobs per second: each tick takes at most 1,000 tasks and advances each one with its own round trip to MySQL, so a tick lasts ~3.3 s while the scheduler uses a fifth of its CPU. That sets the capacity, the 6.7 s delay at every 5-minute burst and the 94 s of the 09:00 peak. More executors do not help: 301, 336 and 330 jobs/s with 1, 2 and 3.
+> - **The bottleneck is the scheduler, by design, not the hardware.** One scheduler creates about 300 jobs per second: each tick takes at most 1,000 tasks and advances each one with its own round trip to MySQL, so a tick lasts ~~about 3.3 s~~ while the scheduler uses a fifth of its CPU. That sets the capacity, the 6.7 s delay at every 5-minute burst and the 94 s of the 09:00 peak. More executors do not help: 301, 336 and 330 jobs/s with 1, 2 and 3. **Fixed:** the round trip per task was an N+1; one statement now advances the whole batch, and a tick of 1,000 takes tens of milliseconds instead of seconds ([P2](bench/results/P2-capacity/README.md#fixed-an-n1-in-the-scheduler)).
 > - **The hardware had room left.** With 0.5 vCPU per service and 2 CPUs for MySQL (~2,500 commits/s at the peak), only the executor's CPU saturated, for a second or two at each burst, and executors scale out.
-> - **How it scales.** Inside one scheduler: larger batches, advanced with one statement instead of one per task. Polling more often does not help, because a tick already lasts longer than the interval. Beyond that: several schedulers, each owning a share of the tasks, and more shards. To keep it simple there is one scheduler per shard, and this deployment runs one shard, so that is where the limit showed first.
+> - **How it scales.** Inside one scheduler: larger batches, ~~advanced with one statement instead of one per task~~ (done). Polling more often does not help, because a tick already lasts longer than the interval. Beyond that: several schedulers, each owning a share of the tasks, and more shards. To keep it simple there is one scheduler per shard, and this deployment runs one shard, so that is where the limit showed first.
 
 ---
 
@@ -117,7 +117,7 @@ The scheduler creates jobs 30 s ahead, and executors claim them one polling inte
 Part of the design above is not built yet:
 
 - **A fast path for critical jobs:** inserted as `running` and executed at once instead of waiting for a claim. Today priority only orders the claim.
-- **Scheduler partitions:** each scheduler owns a set of tasks through a lease. Today one scheduler does all the work and a second one only adds availability. The [benchmarks](benchmarks.md) found this to be the first limit, at about 300 jobs per second.
+- **Scheduler partitions:** each scheduler owns a set of tasks through a lease. Today one scheduler does all the work and a second one only adds availability. The [benchmarks](benchmarks.md) found this to be the first limit, at about 300 jobs per second; most of that was an N+1, fixed since ([P2](bench/results/P2-capacity/README.md#fixed-an-n1-in-the-scheduler)).
 - **Adaptive polling:** claim again at once when a batch comes back full, back off when empty. Today the interval is fixed.
 - **`Retry-After`** on `429` and `503`, and jitter on the backoff.
 - **Concurrency limits per tenant**, and the late-result refinements in [late results](docs/design/late-results.md).

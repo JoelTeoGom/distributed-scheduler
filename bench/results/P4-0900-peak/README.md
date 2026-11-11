@@ -133,7 +133,7 @@ Run page: [reports/20261110T194554Z/report.md](reports/20261110T194554Z/report.m
 
 Both come from the scheduler:
 
-- At ~300 jobs per second, 30 batches of 1,000 take about 100 s. 90% of the peak's jobs were created after they were due, and each was claimed as soon as it existed.
-- It picks tasks by `next_run_at` alone. On a second where 30,000 tasks are due, the batches come out in no order of priority. The executor claims by priority, but only among the jobs that already exist, so a priority 0 job in the last batch waits for the 29 before it.
+- ~~At about 300 jobs per second, 30 batches of 1,000 take about 100 s.~~ **Fixed:** it was the N+1 in [P2](../P2-capacity/README.md#fixed-an-n1-in-the-scheduler); 30 batches now take a couple of seconds. 90% of the peak's jobs were created after they were due, and each was claimed as soon as it existed.
+- It picks tasks by `next_run_at` alone. On a second where 30,000 tasks are due, the batches come out in no order of priority. The executor claims by priority, but only among the jobs that already exist, so a priority 0 job in the last batch waits for the 29 before it. Still open: faster batches shorten that wait but do not order it.
 
 The rest held: the executors' CPU spiked and was throttled at the peak, and MySQL peaked at 2,448 commits/s, with at most 2 row lock waits per second.
