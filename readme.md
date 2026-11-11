@@ -115,6 +115,10 @@ Part of the design above is not built yet:
 - **Concurrency limits per tenant**, and the late-result refinements in [late results](docs/design/late-results.md).
 - **Check gap locks under load.** Shopify found that `FOR UPDATE SKIP LOCKED` under `REPEATABLE READ` takes gap locks when the range is empty, which blocked their inserts. The executor claim and the scheduler insert touch the same index range of `jobs`, so this has to be measured, and the claim moved to `READ COMMITTED` if it shows up.
 
+## Benchmarks
+
+The platform was load-tested on a small AWS-shaped deployment (k3d plus MySQL and Cassandra 1 ms away): capacity, a normal day, the 09:00 peak, slow and broken customers, an executor dying and MySQL disappearing. Nothing was lost in any test; the limit is the scheduler, at about 300 jobs per second. See [benchmarks.md](benchmarks.md).
+
 ## Status
 
 Work in progress. Design notes and the full discussion of alternatives live in [joel-software-notes](https://github.com/JoelTeoGom/joel-software-notes).

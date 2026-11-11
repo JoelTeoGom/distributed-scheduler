@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">MySQL writes</text>
+<text x="64" y="40" font-size="12" fill="#52514e">per second</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">1,000</text>
+<text x="144.8" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="306.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="467.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="629.4" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<text x="791.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:00</text>
+<line x1="306.3" x2="306.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="310.3" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="791.0" x2="791.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="795.0" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M77.7,259.5 L99.6,259.5 L110.0,259.5 L126.1,259.3 L142.3,259.5 L158.5,259.5 L174.6,259.5 L190.8,259.5 L206.9,259.3 L234.9,250.9 L239.2,159.8 L255.4,217.5 L271.5,217.5 L287.7,217.3 L303.9,216.9 L320.0,175.2 L336.2,175.2 L356.1,169.2 L368.5,184.7 L384.6,175.2 L400.8,175.2 L417.0,175.2 L433.1,175.2 L449.3,175.0 L465.4,175.2 L489.2,188.5 L504.2,168.4 L520.3,175.2 L536.5,175.0 L552.6,175.2 L568.8,175.2 L584.9,175.2 L601.1,175.2 L621.1,177.2 L633.4,171.8 L649.6,175.2 L665.7,175.2 L681.9,175.2 L698.0,175.0 L714.2,175.2 L737.0,215.2 L754.2,219.7 L769.3,214.5 L785.5,217.0 L801.6,259.5 L817.8,259.5 L833.9,259.2 L850.1,259.5" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M77.7,259.8 L99.6,259.6 L110.0,259.8 L126.1,259.7 L142.3,259.6 L158.5,259.8 L174.6,259.8 L190.8,259.8 L206.9,259.5 L234.9,255.2 L239.2,206.3 L255.4,239.6 L271.5,241.4 L287.7,239.8 L303.9,240.1 L320.0,215.9 L336.2,213.3 L356.1,211.5 L368.5,218.9 L384.6,217.4 L400.8,214.9 L417.0,216.2 L433.1,217.9 L449.3,212.2 L465.4,215.3 L489.2,222.0 L504.2,208.8 L520.3,214.5 L536.5,211.0 L552.6,213.3 L568.8,214.5 L584.9,211.3 L601.1,212.8 L621.1,213.0 L633.4,212.3 L649.6,214.6 L665.7,213.8 L681.9,214.3 L698.0,214.4 L714.2,212.8 L737.0,226.4 L754.2,230.3 L769.3,224.9 L785.5,228.1 L801.6,259.7 L817.8,259.5 L833.9,252.3 L850.1,259.6" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<text x="837.4" y="40" font-size="12" fill="#0b0b0b">redo fsyncs</text>
+<line x1="815.4" x2="831.4" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="757.2" y="40" font-size="12" fill="#0b0b0b">commits</text>
+<line x1="735.2" x2="751.2" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>
