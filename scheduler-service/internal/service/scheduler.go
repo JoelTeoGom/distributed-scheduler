@@ -12,16 +12,17 @@ type SchedulerService struct {
 	db       ports.SchedulerRepository
 	nextRuns ports.NextRunCalculator
 	clock    func() time.Time
+	interval time.Duration
 }
 
 var _ ports.SchedulerService = (*SchedulerService)(nil)
 
-func NewSchedulerService(db ports.SchedulerRepository, nextRuns ports.NextRunCalculator) *SchedulerService {
-	return &SchedulerService{db: db, nextRuns: nextRuns}
+func NewSchedulerService(db ports.SchedulerRepository, nextRuns ports.NextRunCalculator, interval time.Duration) *SchedulerService {
+	return &SchedulerService{db: db, nextRuns: nextRuns, interval: interval}
 }
 
 func (s *SchedulerService) Start(ctx context.Context) error {
-	scheduleJobsTicker := time.NewTicker(5 * time.Second)
+	scheduleJobsTicker := time.NewTicker(s.interval)
 	defer scheduleJobsTicker.Stop()
 
 	for {

@@ -13,16 +13,15 @@ import (
 	"github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/ports"
 )
 
-const scheduleLookahead = 30 * time.Second
-
 type SchedulerRepository struct {
-	db *sql.DB
+	db        *sql.DB
+	lookahead time.Duration
 }
 
 var _ ports.SchedulerRepository = (*SchedulerRepository)(nil)
 
-func NewSchedulerRepository(db *sql.DB) *SchedulerRepository {
-	return &SchedulerRepository{db: db}
+func NewSchedulerRepository(db *sql.DB, lookahead time.Duration) *SchedulerRepository {
+	return &SchedulerRepository{db: db, lookahead: lookahead}
 }
 
 func (r *SchedulerRepository) ScheduleJobs(ctx context.Context, now time.Time, nextRuns ports.NextRunCalculator) error {
@@ -32,7 +31,7 @@ func (r *SchedulerRepository) ScheduleJobs(ctx context.Context, now time.Time, n
 	}
 	defer tx.Rollback()
 
-	tasks, err := selectScheduledTasks(ctx, tx, now.Add(scheduleLookahead))
+	tasks, err := selectScheduledTasks(ctx, tx, now.Add(r.lookahead))
 	if err != nil {
 		return err
 	}

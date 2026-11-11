@@ -33,6 +33,8 @@ type Config struct {
 	WorkerCount         int
 	// Turns the SSRF check off so local tests can call endpoints on localhost.
 	AllowPrivateDestinations bool
+	// Serves Go's pprof on this address when set, for profiling. Off by default.
+	PprofAddr string
 }
 
 // Variables already set in the environment win over .env.local, so a container needs no file.
@@ -84,6 +86,7 @@ func Load() (Config, error) {
 		JobTimeLimitSeconds:      jobTimeLimitSeconds,
 		WorkerCount:              workerCount,
 		AllowPrivateDestinations: allowPrivateDestinations,
+		PprofAddr:                os.Getenv("PPROF_ADDR"),
 	}
 	if err := config.validate(); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)

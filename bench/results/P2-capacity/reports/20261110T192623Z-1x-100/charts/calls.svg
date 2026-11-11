@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Calls reaching the customers' endpoints</text>
+<text x="64" y="40" font-size="12" fill="#52514e">calls per second</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">50</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">100</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">150</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">200</text>
+<text x="144.8" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="306.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="467.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="629.4" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<text x="791.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:00</text>
+<line x1="306.3" x2="306.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="310.3" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="791.0" x2="791.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="795.0" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M306.3,157.0 L314.4,157.0 L322.5,157.0 L330.6,157.0 L338.6,157.0 L346.7,157.0 L354.8,157.0 L362.9,157.0 L371.0,157.0 L379.0,157.0 L387.1,157.0 L395.2,157.0 L403.3,157.0 L411.3,157.0 L419.4,157.0 L427.5,157.0 L435.6,157.0 L443.7,157.0 L451.7,157.0 L459.8,157.0 L467.9,157.0 L476.0,157.0 L484.0,157.0 L492.1,157.0 L500.2,157.0 L508.3,157.0 L516.3,157.0 L524.4,157.0 L532.5,157.0 L540.6,157.0 L548.7,157.0 L556.7,157.0 L564.8,157.0 L572.9,157.0 L581.0,157.0 L589.0,157.0 L597.1,157.0 L605.2,157.0 L613.3,157.0 L621.4,157.0 L629.4,157.0 L637.5,157.0 L645.6,157.0 L653.7,157.0 L661.7,157.0 L669.8,157.0 L677.9,157.0 L686.0,157.0 L694.1,157.0 L702.1,157.0 L710.2,157.0 L718.3,157.0 L726.4,157.0 L734.4,157.0 L742.5,157.0 L750.6,157.0 L758.7,157.0 L766.8,157.0 L774.8,157.0 L782.9,157.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M306.3,260.0 L314.4,260.0 L322.5,260.0 L330.6,260.0 L338.6,260.0 L346.7,260.0 L354.8,260.0 L362.9,260.0 L371.0,260.0 L379.0,260.0 L387.1,260.0 L395.2,260.0 L403.3,260.0 L411.3,260.0 L419.4,260.0 L427.5,260.0 L435.6,260.0 L443.7,260.0 L451.7,260.0 L459.8,260.0 L467.9,260.0 L476.0,260.0 L484.0,260.0 L492.1,260.0 L500.2,260.0 L508.3,260.0 L516.3,260.0 L524.4,260.0 L532.5,260.0 L540.6,260.0 L548.7,260.0 L556.7,260.0 L564.8,260.0 L572.9,260.0 L581.0,260.0 L589.0,260.0 L597.1,260.0 L605.2,260.0 L613.3,260.0 L621.4,260.0 L629.4,260.0 L637.5,260.0 L645.6,260.0 L653.7,260.0 L661.7,260.0 L669.8,260.0 L677.9,260.0 L686.0,260.0 L694.1,260.0 L702.1,260.0 L710.2,260.0 L718.3,260.0 L726.4,260.0 L734.4,260.0 L742.5,260.0 L750.6,260.0 L758.7,260.0 L766.8,260.0 L774.8,260.0 L782.9,260.0" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<text x="863.8" y="40" font-size="12" fill="#0b0b0b">retries</text>
+<line x1="841.8" x2="857.8" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="737.4" y="40" font-size="12" fill="#0b0b0b">first attempts</text>
+<line x1="715.4" x2="731.4" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

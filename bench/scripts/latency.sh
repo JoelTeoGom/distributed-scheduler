@@ -22,13 +22,5 @@ for proxy in mysql cassandra; do
   fi
 done
 
-# Check from inside the cluster: the average round trip of SELECT 1 over one connection, as the services see it.
-# One session, queries one after another, so each one waits for the previous reply; the connect is amortised.
 log "SELECT 1 round trip from a pod (mysql:3306 through Toxiproxy)"
-kubectl -n "$NS" run "sql-rtt-$RANDOM" --rm -i --quiet --restart=Never --image=mysql:8.4 --image-pull-policy=Never \
-  --command -- bash -c '
-    n=500
-    start=$(date +%s%N)
-    yes "SELECT 1;" | head -n $n | mysql -h mysql -uscheduler -pscheduler -N -B >/dev/null 2>&1
-    end=$(date +%s%N)
-    echo "SELECT 1: $(( (end - start) / n / 1000 )) us per round trip (average of $n)"' || true
+echo "SELECT 1: $(sql_round_trip_us || echo "?") us per round trip (average of 500)"
