@@ -1,3 +1,4 @@
 # Raw data of each run stays local; the README of each test is committed.
 results/early-runs/
 results/*/runs/
+results/.run-counter

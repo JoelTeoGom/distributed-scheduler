@@ -1,7 +1,11 @@
 // Fake tenant endpoint for the benchmarks.
 //
 //	/t?lat=50&dist=lognormal&err=0.05&p=0   sleeps lat ms (fixed, or lognormal around it), answers 503 with probability err, else 200
-//	GET  /stats                             counters and start lag percentiles per priority, as JSON
+//	/t?dist=uniform&min=10000&max=30000     sleeps a uniform random time between min and max ms
+//	   &t=42&k=slow                         tenant and endpoint profile, only recorded, for per-tenant results
+//	GET  /stats                             counters and start lag percentiles per priority, as JSON;
+//	                                        a call the client gave up on is recorded as 499, not 200
+//	GET  /events                            one CSV row per request received, for timelines
 //	POST /reset                             clears everything between runs
 //
 // The start lag is measured when the request arrives, before sleeping: now - X-Scheduled-At.
@@ -10,6 +14,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math"
 	"math/rand/v2"
@@ -23,6 +28,21 @@ import (
 
 const priorities = 4
 
+// statusClientGone is nginx's 499: the client closed the connection before the answer.
+const statusClientGone = 499
+
+// event is one request as the endpoint saw it.
+type event struct {
+	arrived     time.Time
+	scheduledAt time.Time // zero when the header is missing or invalid
+	priority    int
+	tenant      string
+	profile     string
+	attempt     string
+	status      int
+	key         string
+}
+
 type recorder struct {
 	mu        sync.Mutex
 	requests  int
@@ -30,6 +50,7 @@ type recorder struct {
 	succeeded map[string]int // Idempotency-Key -> 200s sent
 	lags      [priorities][]float64
 	badHeader int
+	events    []event
 }
 
 func newRecorder() *recorder {
@@ -42,28 +63,47 @@ func (r *recorder) reset() {
 	r.requests, r.badHeader = 0, 0
 	r.byStatus, r.succeeded = map[int]int{}, map[string]int{}
 	r.lags = [priorities][]float64{}
+	r.events = nil
 }
 
-func (r *recorder) record(priority int, lag float64, lagOK bool, firstAttempt bool, key string, status int) {
+func (r *recorder) record(e event) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.requests++
-	r.byStatus[status]++
-	if status == http.StatusOK {
-		r.succeeded[key]++
+	r.byStatus[e.status]++
+	r.events = append(r.events, e)
+	if e.status == http.StatusOK {
+		r.succeeded[e.key]++
 	}
-	if !lagOK {
+	if e.scheduledAt.IsZero() {
 		r.badHeader++
 		return
 	}
-	if firstAttempt && priority >= 0 && priority < priorities {
-		r.lags[priority] = append(r.lags[priority], lag)
+	if e.attempt == "1" && e.priority >= 0 && e.priority < priorities {
+		r.lags[e.priority] = append(r.lags[e.priority], e.arrived.Sub(e.scheduledAt).Seconds())
+	}
+}
+
+// writeEvents writes every request as CSV: arrival in Unix milliseconds, due time in Unix seconds, start lag in seconds.
+func (r *recorder) writeEvents(w http.ResponseWriter) {
+	r.mu.Lock()
+	events := slices.Clone(r.events)
+	r.mu.Unlock()
+	fmt.Fprintln(w, "arrived_ms,scheduled_s,lag_s,priority,tenant,profile,attempt,status,key")
+	for _, e := range events {
+		scheduled, lag := "", ""
+		if !e.scheduledAt.IsZero() {
+			scheduled = strconv.FormatInt(e.scheduledAt.Unix(), 10)
+			lag = strconv.FormatFloat(e.arrived.Sub(e.scheduledAt).Seconds(), 'f', 4, 64)
+		}
+		fmt.Fprintf(w, "%d,%s,%s,%d,%s,%s,%s,%d,%s\n", e.arrived.UnixMilli(), scheduled, lag, e.priority, e.tenant, e.profile, e.attempt, e.status, e.key)
 	}
 }
 
 type lagStats struct {
 	Jobs int     `json:"jobs"`
 	P50  float64 `json:"p50_s"`
+	P90  float64 `json:"p90_s"`
 	P95  float64 `json:"p95_s"`
 	P99  float64 `json:"p99_s"`
 	Max  float64 `json:"max_s"`
@@ -92,7 +132,8 @@ func summarize(values []float64) lagStats {
 	slices.Sort(sorted)
 	s := lagStats{Jobs: len(sorted)}
 	if len(sorted) > 0 {
-		s.P50, s.P95, s.P99, s.Max = percentile(sorted, .50), percentile(sorted, .95), percentile(sorted, .99), sorted[len(sorted)-1]
+		s.P50, s.P90, s.P95 = percentile(sorted, .50), percentile(sorted, .90), percentile(sorted, .95)
+		s.P99, s.Max = percentile(sorted, .99), sorted[len(sorted)-1]
 	}
 	return s
 }
@@ -131,15 +172,28 @@ func queryFloat(q map[string][]string, key string, def float64) float64 {
 	return def
 }
 
-// delay returns how long to sleep: fixed, or lognormal with median lat and sigma 0.5 (a long tail, like real endpoints).
-func delay(latMs float64, dist string) time.Duration {
+// delay returns how long to sleep: fixed, lognormal with median lat and sigma 0.5 (a long tail, like real endpoints),
+// or uniform between min and max.
+func delay(q map[string][]string) time.Duration {
+	latMs := queryFloat(q, "lat", 0)
+	switch firstValue(q, "dist") {
+	case "lognormal":
+		latMs = latMs * math.Exp(0.5*rand.NormFloat64())
+	case "uniform":
+		low, high := queryFloat(q, "min", 0), queryFloat(q, "max", 0)
+		latMs = low + rand.Float64()*max(high-low, 0)
+	}
 	if latMs <= 0 {
 		return 0
 	}
-	if dist == "lognormal" {
-		latMs = latMs * math.Exp(0.5*rand.NormFloat64())
-	}
 	return time.Duration(latMs * float64(time.Millisecond))
+}
+
+func firstValue(q map[string][]string, key string) string {
+	if v := q[key]; len(v) > 0 {
+		return v[0]
+	}
+	return ""
 }
 
 func main() {
@@ -147,23 +201,32 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/t", func(w http.ResponseWriter, req *http.Request) {
-		arrived := time.Now()
+		e := event{arrived: time.Now(), attempt: req.Header.Get("X-Attempt"), key: req.Header.Get("Idempotency-Key")}
 		q := req.URL.Query()
-		priority := int(queryFloat(q, "p", -1))
-
-		scheduledAt, err := time.Parse(time.RFC3339, req.Header.Get("X-Scheduled-At"))
-		lag := arrived.Sub(scheduledAt).Seconds()
-		firstAttempt := req.Header.Get("X-Attempt") == "1"
-
-		time.Sleep(delay(queryFloat(q, "lat", 0), q.Get("dist")))
-
-		status := http.StatusOK
-		if rand.Float64() < queryFloat(q, "err", 0) {
-			status = http.StatusServiceUnavailable
+		e.priority = int(queryFloat(q, "p", -1))
+		e.tenant, e.profile = firstValue(q, "t"), firstValue(q, "k")
+		if scheduledAt, err := time.Parse(time.RFC3339, req.Header.Get("X-Scheduled-At")); err == nil {
+			e.scheduledAt = scheduledAt
 		}
-		rec.record(priority, lag, err == nil, firstAttempt, req.Header.Get("Idempotency-Key"), status)
-		w.WriteHeader(status)
+
+		time.Sleep(delay(q))
+
+		e.status = http.StatusOK
+		if rand.Float64() < queryFloat(q, "err", 0) {
+			e.status = http.StatusServiceUnavailable
+		}
+		if req.Context().Err() != nil {
+			// The executor gave up (timeout) before the answer: the work was done, but nobody heard about it.
+			e.status = statusClientGone
+		}
+		rec.record(e)
+		w.WriteHeader(e.status)
 		_, _ = w.Write([]byte("ok\n"))
+	})
+
+	mux.HandleFunc("GET /events", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/csv")
+		rec.writeEvents(w)
 	})
 
 	mux.HandleFunc("GET /stats", func(w http.ResponseWriter, _ *http.Request) {

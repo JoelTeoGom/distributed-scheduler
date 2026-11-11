@@ -28,3 +28,6 @@ options:
       # Docker in WSL runs on cgroup v1, and since Kubernetes 1.35 the kubelet refuses to start on it by default.
       - arg: --kubelet-arg=fail-cgroupv1=false
         nodeFilters: [server:*, agent:*]
+      # k3s misreads WSL's cgroup v1 layout ("missing cpu controller") and turns CPU limits off; the kernel has them.
+      - arg: --kubelet-arg=cpu-cfs-quota=true
+        nodeFilters: [server:*, agent:*]

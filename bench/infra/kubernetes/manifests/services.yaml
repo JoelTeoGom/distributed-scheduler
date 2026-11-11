@@ -107,6 +107,10 @@ spec:
           envFrom:
             - secretRef: { name: scheduler-env }
           env:
+            # Polls every second, 10 s ahead (defaults: 5 s and 30 s).
+            - { name: SCHEDULE_INTERVAL, value: "1s" }
+            - { name: SCHEDULE_LOOKAHEAD, value: "10s" }
+            - { name: PPROF_ADDR, value: ":6060" }
             - { name: GOMEMLIMIT, value: "900MiB" }
           resources:
             requests: { cpu: 500m, memory: 1Gi }
@@ -118,7 +122,7 @@ metadata:
   name: executor-service
   namespace: scheduler
 spec:
-  replicas: 1
+  replicas: 2 # as production would run, for availability
   selector:
     matchLabels: { app: executor-service }
   template:
@@ -133,7 +137,12 @@ spec:
           envFrom:
             - secretRef: { name: scheduler-env }
           env:
-            - { name: WORKER_COUNT, value: "50" }
+            # Claims every second the jobs due in the next second (default: 10 s), with enough workers that waiting
+            # jobs never run out of them: each one holds a worker until its time.
+            - { name: JOB_TIME_LIMIT_SECONDS, value: "1" }
+            - { name: WORKER_COUNT, value: "10000" }
+            - { name: JOB_QUEUE_SIZE, value: "10000" }
+            - { name: PPROF_ADDR, value: ":6060" }
             - { name: ALLOW_PRIVATE_DESTINATIONS, value: "true" }
             - { name: GOMEMLIMIT, value: "900MiB" }
           resources:
@@ -160,6 +169,7 @@ spec:
           envFrom:
             - secretRef: { name: scheduler-env }
           env:
+            - { name: RECONCILE_INTERVAL, value: "10s" }
             - { name: GOMEMLIMIT, value: "900MiB" }
           resources:
             requests: { cpu: 500m, memory: 1Gi }
@@ -187,6 +197,7 @@ spec:
           env:
             - { name: CASSANDRA_HOSTS, value: "cassandra" }
             - { name: SUCCEEDED_RETENTION, value: "1h" }
+            - { name: ARCHIVE_INTERVAL, value: "10s" }
             - { name: GOMEMLIMIT, value: "900MiB" }
           resources:
             requests: { cpu: 500m, memory: 1Gi }

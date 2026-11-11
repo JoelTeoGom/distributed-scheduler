@@ -37,6 +37,8 @@ kubectl -n "$NS" create secret generic scheduler-env \
   --from-literal=JWT_SECRET="$JWT_SECRET" \
   --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f bench/infra/kubernetes/manifests/databases.yaml -f bench/infra/kubernetes/manifests/services.yaml -f bench/infra/kubernetes/manifests/fake-endpoint.yaml
+# The image tags never change (:bench), so a rebuilt image only reaches the pods through a restart.
+kubectl -n "$NS" rollout restart deploy >/dev/null
 for d in "${SERVICES[@]}" fake-endpoint; do
   kubectl -n "$NS" rollout status "deploy/$d" --timeout=180s
 done
