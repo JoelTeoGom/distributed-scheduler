@@ -52,15 +52,8 @@ func (r *SchedulerRepository) ScheduleJobs(ctx context.Context, now time.Time, n
 		return err
 	}
 
-	for i, task := range tasks {
-		// version stays untouched: bumping it would invalidate every client's If-Match on each run.
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE tasks
-			SET next_run_at = ?
-			WHERE id = ?`,
-			nextRunTimes[i], task.ID[:]); err != nil {
-			return fmt.Errorf("update next run of task %s: %w", task.ID, err)
-		}
+	if err := updateNextRuns(ctx, tx, tasks, nextRunTimes); err != nil {
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -142,6 +135,27 @@ func insertJobs(ctx context.Context, tx *sql.Tx, tasks []domain.Task, now time.T
 		ON DUPLICATE KEY UPDATE id = id`,
 		values...); err != nil {
 		return fmt.Errorf("insert jobs: %w", err)
+	}
+	return nil
+}
+
+func updateNextRuns(ctx context.Context, tx *sql.Tx, tasks []domain.Task, nextRunTimes []sql.NullTime) error {
+	rows := make([]string, len(tasks))
+	values := make([]any, 0, 2*len(tasks))
+	for i, task := range tasks {
+		rows[i] = `ROW(CAST(? AS BINARY(16)), CAST(? AS DATETIME(3)))`
+		values = append(values, task.ID[:], nextRunTimes[i])
+	}
+
+	// Placeholders inside VALUES have no column to take a type from, so MySQL reads them as utf8mb4 text without the casts.
+	// version stays untouched: bumping it would invalidate every client's If-Match on each run.
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE tasks
+		JOIN (VALUES `+strings.Join(rows, ", ")+`) AS next_runs (id, next_run_at)
+			ON tasks.id = next_runs.id
+		SET tasks.next_run_at = next_runs.next_run_at`,
+		values...); err != nil {
+		return fmt.Errorf("update next runs: %w", err)
 	}
 	return nil
 }
