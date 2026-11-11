@@ -127,6 +127,6 @@ Run page: [reports/20261110T200915Z/report.md](reports/20261110T200915Z/report.m
 
 **No, within the objective.**
 
-- The other customers' p99 was 7.56 s, against 6.67 s with the same load in P3: 13% more, under the 20% allowed. That p99 is still the scheduler's 5-minute batch, not the noisy customer.
+- The other customers' p99 was 7.56 s, against 6.67 s with the same load in P3: 13% more, under the 20% allowed. That p99 is still the scheduler's 5-minute batch, not the noisy customer (the scheduler's part since fixed, see [P2](../P2-capacity/README.md#fixed-an-n1-in-the-scheduler)).
 - Its 1,338 hanging calls each held a worker for 30 s, at most a few hundred of the 20,000 workers.
 - Its endpoint finished 1,486 calls after they had timed out: the repeated work of P5, now for one customer.

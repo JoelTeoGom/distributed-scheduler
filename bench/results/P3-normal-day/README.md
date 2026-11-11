@@ -136,6 +136,6 @@ Run page: [reports/20261110T193822Z/report.md](reports/20261110T193822Z/report.m
 The p99 of 6.67 s is that one second. Its 5,005 jobs were late for two reasons:
 
 - **2,919 were claimed on time and still started up to 2 s late.** Two executors at 0.5 vCPU take about 2 s to fire some 3,000 calls at once.
-- **About 2,000 were created late** by the scheduler's last two batches of 1,000, 1.6 s and 6.4 s after their time. Five batches of ~3.3 s do not fit in the scheduler's 10 s lookahead (see P2).
+- **About 2,000 were created late** by the scheduler's last two batches of 1,000, 1.6 s and 6.4 s after their time. ~~Five batches of about 3.3 s do not fit in the scheduler's 10 s lookahead (see P2).~~ **Fixed:** it was the N+1 in [P2](../P2-capacity/README.md#fixed-an-n1-in-the-scheduler); five batches now take a fraction of a second. The other 2,919, late because of the executors' CPU, are not affected by the fix.
 
 The objective of p99 ≤ 1 s holds for ordinary seconds and fails at every 5-minute burst. The one-off jobs that land on a burst wait behind it, which is where their 3.6 s p99 comes from.
