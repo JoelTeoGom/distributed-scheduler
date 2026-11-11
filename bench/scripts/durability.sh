@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Changes how often InnoDB flushes the redo log, live (SET GLOBAL, no restart). Used by E5.
+# Changes how often InnoDB flushes the redo log, live (SET GLOBAL, no restart). The tests run with 1.
 #   bench/scripts/durability.sh 1    # fsync on every commit, as on RDS (the default)
 #   bench/scripts/durability.sh 2    # write on every commit, fsync about once per second
 #   bench/scripts/durability.sh      # print the current values

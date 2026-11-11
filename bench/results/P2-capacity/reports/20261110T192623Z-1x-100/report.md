@@ -94,7 +94,3 @@ MySQL: up to 486 commits/s, 261 redo fsyncs/s, 0 row lock waits/s, 9 connections
       10ms  3.03% 81.82%       30ms  9.09%  runtime.mPark
       10ms  3.03% 84.85%       20ms  6.06%  runtime.mallocgc
 ```
-
-## Conclusions
-
-*(to be written)*

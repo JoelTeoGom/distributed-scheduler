@@ -88,7 +88,3 @@ MySQL: up to 112 commits/s, 90 redo fsyncs/s, 0 row lock waits/s, 16 connections
          0     0%   100%       10ms 50.00%  github.com/go-sql-driver/mysql.(*mysqlConn).writeWithTimeout
          0     0%   100%       10ms 50.00%  github.com/go-sql-driver/mysql.(*mysqlStmt).Close
 ```
-
-## Conclusions
-
-*(to be written)*

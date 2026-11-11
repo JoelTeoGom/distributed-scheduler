@@ -94,7 +94,3 @@ MySQL: up to 232 commits/s, 155 redo fsyncs/s, 0 row lock waits/s, 10 connection
          0     0%   100%       30ms 23.08%  database/sql.ctxDriverPrepare
          0     0%   100%       40ms 30.77%  database/sql.ctxDriverStmtExec
 ```
-
-## Conclusions
-
-*(to be written)*

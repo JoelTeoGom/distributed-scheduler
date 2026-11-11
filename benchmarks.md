@@ -383,7 +383,7 @@ python3 bench/scripts/index.py  # write the results into each test's README and 
 bench/scripts/down.sh           # delete everything except bench/results
 ```
 
-`bench/scripts/latency.sh 1ms|off` changes the latency live, and `bench/scripts/durability.sh 1|2` the MySQL `fsync` policy.
+`tests.sh` seeds each test with `workload.py`, samples every 2 s with `telemetry.py` and writes each run's report and charts with `report.py`. `bench/scripts/latency.sh 1ms|off` changes the latency live, and `bench/scripts/durability.sh 1|2` the MySQL `fsync` policy.
 
 ## 7. Threats to validity
 
@@ -394,3 +394,5 @@ bench/scripts/down.sh           # delete everything except bench/results
 - **Disk not capped.** `fsync` on a local SSD is far faster than on an RDS volume: database-bound numbers are an upper bound.
 - **Small tables.** The hot table fits in memory; in production it would be larger and miss the cache more often.
 - **One endpoint, plain HTTP.** No TLS, and connection reuse is easier than with thousands of customer hosts.
+- **A stall every ~30 s.** Now and then a whole second of jobs starts up to 1 s late, most likely the host's disk writeback; it puts a floor of ~0.8 s under the p99 of the lighter tests (see [P0](bench/results/P0-calibration/README.md)).
+- **Short runs.** Each test lasts minutes, the longest 30. Slow leaks, a full hour of history for the archiver, and the hourly and daily crons firing more than once need runs of hours.

@@ -94,7 +94,3 @@ MySQL: up to 970 commits/s, 542 redo fsyncs/s, 0 row lock waits/s, 9 connections
       10ms  1.72% 84.48%       10ms  1.72%  runtime.(*sweepLocked).sweep
       10ms  1.72% 86.21%       10ms  1.72%  runtime.acquireSudog
 ```
-
-## Conclusions
-
-*(to be written)*

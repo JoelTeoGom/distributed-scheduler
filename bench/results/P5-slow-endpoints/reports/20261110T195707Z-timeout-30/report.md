@@ -95,7 +95,3 @@ MySQL: up to 114 commits/s, 130 redo fsyncs/s, 0 row lock waits/s, 14 connection
          0     0%   100%       10ms 11.11%  database/sql.(*Tx).QueryContext
          0     0%   100%       30ms 33.33%  database/sql.(*driverStmt).Close
 ```
-
-## Conclusions
-
-*(to be written)*

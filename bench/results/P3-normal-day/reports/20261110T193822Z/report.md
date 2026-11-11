@@ -95,7 +95,3 @@ MySQL: up to 1884 commits/s, 1114 redo fsyncs/s, 1 row lock waits/s, 14 connecti
          0     0%   100%       10ms 20.00%  database/sql.(*DB).execDC.func3
          0     0%   100%       20ms 40.00%  database/sql.(*DB).retry
 ```
-
-## Conclusions
-
-*(to be written)*

@@ -83,7 +83,3 @@ MySQL: up to 159 commits/s, 140 redo fsyncs/s, 2 row lock waits/s, 15 connection
          0     0%   100%       20ms 25.00%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.(*SchedulerRepository).ScheduleJobs
          0     0%   100%       20ms 25.00%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/service.(*SchedulerService).Start
 ```
-
-## Conclusions
-
-*(to be written)*
