@@ -97,7 +97,3 @@ MySQL: up to 2448 commits/s, 1148 redo fsyncs/s, 2 row lock waits/s, 15 connecti
      0.01s  0.81% 73.17%      0.12s  9.76%  database/sql.(*driverStmt).Close
      0.01s  0.81% 73.98%      0.01s  0.81%  database/sql.convertAssignRows
 ```
-
-## Conclusions
-
-*(to be written)*

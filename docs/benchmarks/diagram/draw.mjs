@@ -125,21 +125,22 @@ arrow([[662, 515], [604, 515]], C.red);
 const nodes = [
   { name: "node-0", role: "control plane · no app pods", color: C.gray, pods: [
     ["local-path-provisioner", "", { system: true }],
-  ] },
-  { name: "node-1", role: "worker · 4 GB RAM", color: C.blue, pods: [
-    ["task-service", ["0.5 vCPU · 1 GiB", "tasks API"]],
-    ["archiver", ["0.5 vCPU · 1 GiB", "old jobs -> Cassandra"]],
     ["metrics-server", "", { system: true }],
   ] },
-  { name: "node-2", role: "worker · 4 GB RAM", color: C.blue, pods: [
+  { name: "node-1", role: "worker · 4 GB RAM", color: C.blue, pods: [
     ["scheduler", ["0.5 vCPU · 1 GiB", "tasks -> jobs"]],
-    ["fake-endpoint", ["2 vCPU · 512 MiB", "plays the customers' APIs"], { color: C.orange, fill: C.orangeFill }],
+    ["archiver", ["0.5 vCPU · 1 GiB", "old jobs -> Cassandra"]],
+    ["job-service", ["0.5 vCPU · 1 GiB", "jobs API"]],
+  ] },
+  { name: "node-2", role: "worker · 4 GB RAM", color: C.blue, pods: [
+    ["executor 1 of 2", ["0.5 vCPU · 1 GiB", "10,000 workers"], { fill: C.blueStrong }],
     ["coredns", "", { system: true }],
   ] },
   { name: "node-3", role: "worker · 4 GB RAM", color: C.blue, pods: [
-    ["executor", ["0.5 vCPU · 1 GiB", "10,000 workers"], { fill: C.blueStrong }],
-    ["job-service", ["0.5 vCPU · 1 GiB", "jobs API"]],
+    ["executor 2 of 2", ["0.5 vCPU · 1 GiB", "10,000 workers"], { fill: C.blueStrong }],
+    ["fake-endpoint", ["2 vCPU · 512 MiB", "plays the customers' APIs"], { color: C.orange, fill: C.orangeFill }],
     ["reconciler", ["0.5 vCPU · 1 GiB", "expired leases"]],
+    ["task-service", ["0.5 vCPU · 1 GiB", "tasks API"]],
   ] },
 ];
 nodes.forEach((node, i) => {
@@ -147,14 +148,14 @@ nodes.forEach((node, i) => {
   box(x, y, 280, 540, node.color, { fill: "#fff", radius: 14 });
   text(x + 20, y + 40, node.name, { size: 24, color: node.color });
   text(x + 20, y + 70, node.role, { size: 15, color: C.muted });
-  node.pods.forEach(([name, detail, options = {}], j) => pod(x + 22, y + 100 + j * 116, name, detail, options));
+  node.pods.forEach(([name, detail, options = {}], j) => pod(x + 22, y + 100 + j * 108, name, detail, options));
 });
-text(680, 1040, "pod: 0.5 vCPU · 1 GiB = a Fargate task · pods are placed by Kubernetes · k3d calls node-0 server-0 and node-1..3 agent-0..2", { size: 15, color: C.muted });
+text(680, 1040, "pod: 0.5 vCPU · 1 GiB = a Fargate task · placement as in the tests, chosen by Kubernetes · k3d calls node-0 server-0 and node-1..3 agent-0..2", { size: 15, color: C.muted });
 
 // Bench scripts, in WSL next to Docker
 box(100, 1140, 1840, 110, C.ink, { fill: "#fff", radius: 14 });
 text(124, 1180, "bench/scripts · run in WSL", { size: 21 });
-text(124, 1218, "up.sh builds it all · seed.sh writes the tasks into MySQL · latency.sh talks to Toxiproxy · collect.sh samples CPU, memory and disk · results.sh reads MySQL and the fake endpoint", { size: 16, color: C.muted });
+text(124, 1218, "up.sh builds it all · tests.sh runs a test · workload.py writes its tasks · latency.sh talks to Toxiproxy · telemetry.py samples CPU, memory and disk · report.py draws the charts", { size: 16, color: C.muted });
 
 // Notes
 note(40, 1320, 630, 170, "Why k3d", [

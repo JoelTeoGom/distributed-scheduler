@@ -131,7 +131,3 @@ MySQL: up to 2546 commits/s, 1182 redo fsyncs/s, 3 row lock waits/s, 15 connecti
          0     0%   100%       10ms 50.00%  runtime.(*timers).check
          0     0%   100%       10ms 50.00%  runtime.findRunnable
 ```
-
-## Conclusions
-
-*(to be written)*

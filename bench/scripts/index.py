@@ -142,7 +142,7 @@ def main():
         if "## Results" not in text:
             text = text.rstrip() + "\n\n" + section
         if "## Conclusions" not in text:
-            text = text.rstrip() + "\n\n## Conclusions\n\n*(to be written)*\n"
+            text = text.rstrip() + "\n\n## Conclusions\n\n*(not written yet)*\n"
         readme.write_text(text)
 
         code = test.name[:2]

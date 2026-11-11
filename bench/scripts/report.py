@@ -285,7 +285,6 @@ def main():
             header, top = pprof_top(path)
             if top:
                 lines += [f"## CPU profile: {kind}, 20 s from {clock(t(path.stem.split('-')[-1]))}", "", "```text", *top, "```", ""]
-    lines += ["## Conclusions", "", "*(to be written)*", ""]
     (OUT / "report.md").write_text("\n".join(lines))
     print(f"wrote {OUT.relative_to(Path.cwd()) if OUT.is_relative_to(Path.cwd()) else OUT}")
     print(f"  {len(jobs):,} jobs, {status['succeeded']:,} succeeded, {status['dead']:,} dead, p99 {percentile(all_lags, 99):.3f} s")
