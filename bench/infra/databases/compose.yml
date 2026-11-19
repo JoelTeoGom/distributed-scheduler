@@ -1,4 +1,4 @@
-# Databases for the benchmarks, sized like their AWS counterparts. Used on top of the root compose file,
+# Databases and the fake endpoint for the benchmarks, sized like their AWS counterparts. Used on top of the root compose file,
 # starting only the databases, Toxiproxy and the migrations (the services run in k3d):
 #   docker compose -f docker-compose.yml -f bench/infra/databases/compose.yml up -d mysql cassandra toxiproxy migrate-tasks migrate-jobs migrate-cassandra
 #
@@ -9,7 +9,7 @@ networks:
     ipam:
       config:
         - subnet: 172.28.0.0/16
-          ip_range: 172.28.128.0/17 # dynamic IPs (migrations, k3d nodes) come from here, never .10 or .11
+          ip_range: 172.28.128.0/17 # dynamic IPs (migrations, k3d nodes) come from here, never .10 to .13
 
 services:
   # RDS db.t4g.medium: 2 vCPU / 4 GB. RDS sizes the buffer pool at ~75% of RAM; the 128 MB default is not realistic.
@@ -46,3 +46,17 @@ services:
     networks:
       default:
         ipv4_address: 172.28.0.12
+
+  # The customers' APIs (bench/fake-endpoint), outside the cluster like real ones. Sized so it never limits the test:
+  # 30,000 calls open at once take about a gigabyte. Pods reach it as fake-endpoint:8080 (manifests/fake-endpoint.yaml).
+  fake-endpoint:
+    image: scheduler/fake-endpoint:bench
+    cpus: 4
+    mem_limit: 4g
+    environment:
+      GOMAXPROCS: "4"
+    ports:
+      - "127.0.0.1:18091:8080" # /stats, /events and /reset
+    networks:
+      default:
+        ipv4_address: 172.28.0.13

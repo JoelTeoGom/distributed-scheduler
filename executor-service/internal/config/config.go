@@ -32,7 +32,10 @@ type Config struct {
 	ShutdownGracePeriod time.Duration
 	JobQueueSize        int
 	JobTimeLimitSeconds int
-	WorkerCount         int
+	// How often the pool claims, and how far ahead of their time it takes jobs. Both default to JOB_TIME_LIMIT_SECONDS.
+	ClaimInterval time.Duration
+	ClaimLead     time.Duration
+	WorkerCount   int
 	// Turns the SSRF check off so local tests can call endpoints on localhost.
 	AllowPrivateDestinations bool
 	// Serves Go's pprof on this address when set, for profiling. Off by default.
@@ -73,6 +76,16 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse ALLOW_PRIVATE_DESTINATIONS: %w", err)
 	}
 
+	claimInterval, err := parseDurationOr(os.Getenv("CLAIM_INTERVAL"), time.Duration(jobTimeLimitSeconds)*time.Second)
+	if err != nil {
+		return Config{}, fmt.Errorf("parse CLAIM_INTERVAL: %w", err)
+	}
+
+	claimLead, err := parseDurationOr(os.Getenv("CLAIM_LEAD"), time.Duration(jobTimeLimitSeconds)*time.Second)
+	if err != nil {
+		return Config{}, fmt.Errorf("parse CLAIM_LEAD: %w", err)
+	}
+
 	maxOpenConnections, err := strconv.Atoi(getEnvOrDefault("MYSQL_MAX_OPEN_CONNS", defaultMaxOpenConnections))
 	if err != nil {
 		return Config{}, fmt.Errorf("parse MYSQL_MAX_OPEN_CONNS: %w", err)
@@ -99,6 +112,8 @@ func Load() (Config, error) {
 		ShutdownGracePeriod:      shutdownGracePeriod,
 		JobQueueSize:             jobQueueSize,
 		JobTimeLimitSeconds:      jobTimeLimitSeconds,
+		ClaimInterval:            claimInterval,
+		ClaimLead:                claimLead,
 		WorkerCount:              workerCount,
 		AllowPrivateDestinations: allowPrivateDestinations,
 		PprofAddr:                os.Getenv("PPROF_ADDR"),
@@ -133,6 +148,14 @@ func (c Config) validate() error {
 		problems = append(problems, errors.New("JOB_TIME_LIMIT_SECONDS must be positive"))
 	}
 
+	if c.ClaimInterval <= 0 {
+		problems = append(problems, errors.New("CLAIM_INTERVAL must be positive"))
+	}
+
+	if c.ClaimLead <= 0 {
+		problems = append(problems, errors.New("CLAIM_LEAD must be positive"))
+	}
+
 	if c.WorkerCount <= 0 {
 		problems = append(problems, errors.New("WORKER_COUNT must be positive"))
 	}
@@ -145,6 +168,13 @@ func (c Config) validate() error {
 		problems = append(problems, errors.New("MYSQL_MAX_IDLE_CONNS must be between 0 and MYSQL_MAX_OPEN_CONNS"))
 	}
 	return errors.Join(problems...)
+}
+
+func parseDurationOr(value string, defaultValue time.Duration) (time.Duration, error) {
+	if value == "" {
+		return defaultValue, nil
+	}
+	return time.ParseDuration(value)
 }
 
 func getEnvOrDefault(key string, defaultValue string) string {

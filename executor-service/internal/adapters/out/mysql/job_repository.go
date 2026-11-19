@@ -26,14 +26,14 @@ func NewJobRepository(db *sql.DB, executorID string) *JobRepository {
 }
 
 // The transaction ends before any HTTP call, so the row locks last milliseconds.
-func (r *JobRepository) ClaimJobs(ctx context.Context, timeLimit, jobLimit int) ([]*domain.Job, error) {
+func (r *JobRepository) ClaimJobs(ctx context.Context, lead time.Duration, jobLimit int) ([]*domain.Job, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("mysql: begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	jobIDs, err := selectClaimableJobIDs(ctx, tx, timeLimit, jobLimit)
+	jobIDs, err := selectClaimableJobIDs(ctx, tx, lead, jobLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -157,16 +157,16 @@ func (r *JobRepository) ReleaseJob(ctx context.Context, job *domain.Job) error {
 }
 
 // SKIP LOCKED lets several executors claim at the same time without waiting for each other's rows.
-func selectClaimableJobIDs(ctx context.Context, tx *sql.Tx, timeLimit, jobLimit int) ([]uuid.UUID, error) {
+func selectClaimableJobIDs(ctx context.Context, tx *sql.Tx, lead time.Duration, jobLimit int) ([]uuid.UUID, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT id
 		FROM jobs
 		WHERE status = 'pending'
-		  AND next_attempt_at <= NOW(3) + INTERVAL ? SECOND
+		  AND next_attempt_at <= NOW(3) + INTERVAL ? MICROSECOND
 		ORDER BY priority, next_attempt_at
 		LIMIT ?
 		FOR UPDATE SKIP LOCKED`,
-		timeLimit, jobLimit)
+		lead.Microseconds(), jobLimit)
 	if err != nil {
 		return nil, fmt.Errorf("mysql: select claimable jobs: %w", err)
 	}

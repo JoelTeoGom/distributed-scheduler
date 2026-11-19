@@ -35,7 +35,7 @@ func main() {
 		}()
 	}
 
-	schedulerRepository := mysql.NewSchedulerRepository(db, config.ScheduleLookahead)
+	schedulerRepository := mysql.NewSchedulerRepository(db, config.ScheduleLookahead, config.ScheduleBatchSize)
 	cron := cron.NewCalculator()
 
 	schedulerService := service.NewSchedulerService(schedulerRepository, cron, config.ScheduleInterval)

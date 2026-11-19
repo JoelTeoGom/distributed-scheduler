@@ -26,7 +26,7 @@ CGROUP = "/sys/fs/cgroup"
 NAMESPACE = "scheduler"
 CLUSTER_PREFIX = "k3d-scheduler-bench-"
 COMPOSE_CONTAINERS = {"mysql": "distributed-scheduler-mysql-1", "cassandra": "distributed-scheduler-cassandra-1",
-                      "toxiproxy": "distributed-scheduler-toxiproxy-1"}
+                      "toxiproxy": "distributed-scheduler-toxiproxy-1", "fake-endpoint": "distributed-scheduler-fake-endpoint-1"}
 # Handler_commit counts every commit, autocommit statements included; Com_commit only counts explicit COMMITs.
 MYSQL_COUNTERS = {"Handler_commit": "commits_per_s", "Com_insert": "inserts_per_s", "Com_update": "updates_per_s",
                   "Innodb_os_log_fsyncs": "redo_fsyncs_per_s", "Innodb_row_lock_waits": "row_lock_waits_per_s"}

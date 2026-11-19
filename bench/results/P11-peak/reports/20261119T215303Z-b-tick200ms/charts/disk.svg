@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Disk writes</text>
+<text x="64" y="40" font-size="12" fill="#52514e">writes per second on Docker's disk</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">1,250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">2,500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">3,750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">5,000</text>
+<text x="145.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="280.1" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:50</text>
+<text x="415.2" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:40</text>
+<text x="550.2" y="278" font-size="11" fill="#52514e" text-anchor="middle">2:30</text>
+<text x="685.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">3:20</text>
+<text x="820.4" y="278" font-size="11" fill="#52514e" text-anchor="middle">4:10</text>
+<line x1="145.0" x2="145.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="149.0" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="663.7" x2="663.7" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="667.7" y="65" font-size="11" fill="#52514e">load ends</text>
+<line x1="420.6" x2="420.6" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="424.6" y="65" font-size="11" fill="#52514e">09:00 peak</text>
+<path d="M113.1,259.3 L118.5,255.7 L123.9,258.0 L129.3,258.0 L134.7,258.1 L140.1,258.1 L145.5,257.3 L151.5,255.6 L156.3,254.0 L161.7,255.3 L167.1,255.2 L172.5,254.2 L177.9,252.9 L183.3,253.2 L188.7,253.8 L194.7,254.2 L201.1,256.2 L206.5,254.0 L211.9,253.9 L217.3,254.8 L222.7,253.8 L228.1,253.8 L233.5,252.8 L239.5,253.7 L244.3,253.4 L249.7,256.0 L255.1,253.6 L260.6,211.1 L266.0,192.2 L271.4,248.0 L276.8,245.9 L282.7,249.1 L287.6,248.8 L293.0,253.7 L298.4,253.1 L303.8,250.5 L309.2,252.8 L314.6,253.1 L320.0,252.0 L327.1,253.1 L330.8,255.0 L336.2,253.3 L341.6,251.6 L347.0,253.8 L352.4,253.3 L357.8,254.3 L363.2,253.5 L368.9,254.6 L374.0,254.8 L380.9,254.8 L386.3,253.1 L391.7,254.7 L397.1,248.6 L402.5,233.9 L407.9,226.8 L413.7,241.7 L418.7,253.5 L424.1,186.1 L429.5,247.3 L434.9,162.0 L440.3,110.6 L445.7,100.2 L451.1,94.7 L457.0,94.4 L461.9,105.2 L469.0,133.5 L474.4,92.6 L479.8,96.4 L485.2,88.8 L490.6,223.9 L496.0,244.8 L503.1,237.3 L506.8,217.6 L512.2,170.1 L517.6,102.5 L523.0,106.2 L528.4,99.9 L533.8,95.1 L539.3,100.6 L546.3,104.7 L550.1,104.9 L557.0,136.2 L562.4,164.8 L567.8,243.2 L573.2,247.3 L578.6,188.9 L584.0,138.0 L591.1,246.8 L594.8,248.7 L600.2,193.1 L605.6,101.8 L611.0,172.3 L616.4,213.2 L621.8,240.0 L627.2,242.8 L633.2,245.6 L638.0,241.4 L645.0,247.7 L650.4,249.6 L655.8,251.6 L661.2,250.3 L666.6,250.5 L672.0,253.3 L678.0,229.7 L682.9,235.5 L688.3,253.0 L693.7,253.2 L699.1,253.4 L704.5,253.7 L709.9,253.9 L715.3,251.7 L721.2,256.1 L726.1,253.9 L733.1,255.5 L738.5,255.7 L743.9,255.7 L749.3,252.5 L754.8,257.2 L760.2,258.4 L766.0,256.7 L771.0,257.4 L776.4,259.0 L781.8,258.3 L787.2,258.7 L792.6,258.9 L798.0,258.0 L803.4,259.0 L810.4,258.6 L814.2,259.4 L819.6,258.8 L826.6,258.7 L832.0,258.9 L837.4,258.9 L842.8,259.1 L848.2,259.2 L854.0,259.0 L859.0,259.3 L864.4,259.0 L869.8,258.8 L875.2,259.3" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

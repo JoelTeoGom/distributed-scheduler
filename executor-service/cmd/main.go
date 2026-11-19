@@ -45,7 +45,7 @@ func main() {
 		log.Printf("ALLOW_PRIVATE_DESTINATIONS is on: jobs can call internal addresses, never use it in production")
 	}
 	executor := httpclient.NewExecutor(config.AllowPrivateDestinations)
-	workerService := service.NewWorkerService(jobRepository, executor, config.JobQueueSize, config.JobTimeLimitSeconds, config.ShutdownGracePeriod)
+	workerService := service.NewWorkerService(jobRepository, executor, config.JobQueueSize, config.ClaimInterval, config.ClaimLead, config.ShutdownGracePeriod)
 
 	// The pool runs until the signal, and the database closes after it so in-flight jobs can save their result.
 	if err := workerService.StartWorkerPool(ctx, config.WorkerCount); err != nil && !errors.Is(err, context.Canceled) {

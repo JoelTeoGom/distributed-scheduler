@@ -24,7 +24,7 @@ func newFakeJobRepository(jobs ...*domain.Job) *fakeJobRepository {
 	return &fakeJobRepository{claimable: jobs, claimed: make(chan struct{}), saved: map[uuid.UUID]string{}, saveFailed: map[uuid.UUID]bool{}}
 }
 
-func (f *fakeJobRepository) ClaimJobs(_ context.Context, _, _ int) ([]*domain.Job, error) {
+func (f *fakeJobRepository) ClaimJobs(_ context.Context, _ time.Duration, _ int) ([]*domain.Job, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	jobs := f.claimable
@@ -94,7 +94,7 @@ func newJob(nextAttemptAt time.Time) *domain.Job {
 func runPool(t *testing.T, repository *fakeJobRepository, executor *fakeExecutor, gracePeriod time.Duration) time.Duration {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
-	pool := NewWorkerService(repository, executor, 10, 1, gracePeriod)
+	pool := NewWorkerService(repository, executor, 10, time.Second, time.Second, gracePeriod)
 
 	stopped := make(chan error, 1)
 	go func() { stopped <- pool.StartWorkerPool(ctx, 4) }()

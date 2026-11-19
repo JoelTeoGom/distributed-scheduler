@@ -15,14 +15,15 @@ type WorkerService struct {
 	db                  ports.JobRepository
 	requests            ports.RequestExecutor
 	jobQueueSize        int
-	timeLimit           int
+	claimInterval       time.Duration
+	claimLead           time.Duration
 	shutdownGracePeriod time.Duration
 }
 
 var _ ports.WorkerService = (*WorkerService)(nil)
 
-func NewWorkerService(db ports.JobRepository, requests ports.RequestExecutor, jobQueueSize, timeLimit int, shutdownGracePeriod time.Duration) *WorkerService {
-	return &WorkerService{db: db, requests: requests, jobQueueSize: jobQueueSize, timeLimit: timeLimit, shutdownGracePeriod: shutdownGracePeriod}
+func NewWorkerService(db ports.JobRepository, requests ports.RequestExecutor, jobQueueSize int, claimInterval, claimLead, shutdownGracePeriod time.Duration) *WorkerService {
+	return &WorkerService{db: db, requests: requests, jobQueueSize: jobQueueSize, claimInterval: claimInterval, claimLead: claimLead, shutdownGracePeriod: shutdownGracePeriod}
 }
 
 // ctx is the shutdown signal: it stops the claims and releases jobs still waiting for their time.
@@ -47,8 +48,8 @@ func (s *WorkerService) StartWorkerPool(ctx context.Context, workerCount int) er
 		}()
 	}
 
-	// The claim takes jobs due up to timeLimit ahead, so ticking at the same interval leaves no gap between claims.
-	ticker := time.NewTicker(time.Duration(s.timeLimit) * time.Second)
+	// The claim takes jobs due up to claimLead ahead; a lead at least as long as the interval leaves no gap between claims.
+	ticker := time.NewTicker(s.claimInterval)
 	defer ticker.Stop()
 
 	for {
@@ -65,7 +66,7 @@ func (s *WorkerService) StartWorkerPool(ctx context.Context, workerCount int) er
 			if availableWorkers <= 0 {
 				continue
 			}
-			jobs, err := s.db.ClaimJobs(ctx, s.timeLimit, availableWorkers)
+			jobs, err := s.db.ClaimJobs(ctx, s.claimLead, availableWorkers)
 			if err != nil {
 				// A database outage must not stop the pool: the next tick claims again.
 				slog.ErrorContext(ctx, "claim jobs", "error", err)

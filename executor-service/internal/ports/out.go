@@ -9,7 +9,7 @@ import (
 
 // The Save methods return domain.ErrLeaseLost when the job no longer belongs to this claim.
 type JobRepository interface {
-	ClaimJobs(ctx context.Context, timeLimit, jobLimit int) ([]*domain.Job, error)
+	ClaimJobs(ctx context.Context, lead time.Duration, jobLimit int) ([]*domain.Job, error)
 	SaveSucceeded(ctx context.Context, job *domain.Job) error
 	SaveRetry(ctx context.Context, job *domain.Job, nextAttemptAt time.Time) error
 	SaveDead(ctx context.Context, job *domain.Job) error
