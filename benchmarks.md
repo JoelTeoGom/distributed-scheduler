@@ -254,13 +254,18 @@ Each test has its question, what it does, its results and conclusions here, and 
 |---|---|---|---|---|---|---|---|
 | [run](bench/results/P4-0900-peak/reports/20261110T194554Z/report.md) | 44,667 | 44,168 | 499 | 0 | 1 | 90.3 | 23.36 / 77.38 / 91.74 / 94.14 s |
 | [r2](bench/results/P4-0900-peak/reports/20261119T204356Z-r2/report.md) | 39,667 | 39,266 | 401 | 0 | 20 | 80.9 | 6.53 / 23.44 / 37.16 / 37.77 s |
+| [r3](bench/results/P4-0900-peak/reports/20261119T212505Z-r3/report.md) | 39,667 | 39,211 | 456 | 0 | 31 | 82.2 | 3.70 / 21.59 / 34.52 / 34.66 s |
 
 - **09:00 peak:** 30,007 jobs due on the same second. The last one started **94.1 s** late (p50 43.3 s, p99 91.7 s); priority 0 p99 **91.6 s**.
 
 - **09:00 peak:** 29,099 jobs due on the same second. The last one started **37.8 s** late (p50 9.0 s, p99 37.6 s); priority 0 p99 **23.4 s**.
+
+- **09:00 peak:** 29,893 jobs due on the same second. The last one started **34.7 s** late (p50 13.3 s, p99 34.6 s); priority 0 p99 **34.5 s**.
+- **Peak throughput:** 862 jobs/s on average until the last one started, 7,379 in its busiest second.
+- **Peak by priority** (p50 / p99 / max): 0: 13.2 / 34.5 / 34.5 s; 1: 13.2 / 34.6 / 34.6 s; 2: 13.6 / 34.6 / 34.7 s; 3: 13.1 / 34.5 / 34.6 s.
 <!-- /results:P4 -->
 
-**Conclusions:** No: 94 s for the whole peak, against 60 s, and priority 0 as late as everyone else. The scheduler creates the 30 batches of 1,000 in ~~about 100 s~~ (**fixed**, see P2) and picks tasks by time alone, so priority cannot help jobs that do not exist yet (still open). **Round 2, after the fix:** the last job of the peak started 37.8 s late, within the 60 s, and priority 0 and 1 were done by 23.6 s against 37.8 s for 2 and 3. Priority 0 is still far from its 5 s; the executors' CPU is now the limit.
+**Conclusions:** No: 94 s for the whole peak, against 60 s, and priority 0 as late as everyone else. The scheduler creates the 30 batches of 1,000 in ~~about 100 s~~ (**fixed**, see P2) and picks tasks by time alone, so priority cannot help jobs that do not exist yet (still open). **Round 2, after the fix:** the last job of the peak started 37.8 s late, within the 60 s, and priority 0 and 1 were done by 23.6 s against 37.8 s for 2 and 3. Priority 0 is still far from its 5 s; the executors' CPU is now the limit. **GOMAXPROCS from the CPU limit:** the peak drained at 854 jobs/s instead of 766 (+11%), with 64% less throttling and 23% less executor CPU; priority stopped counting, because the scheduler's 1,000 jobs per second became the limit again. From round 1: ×2.7 jobs/s at the peak, last job at 34.7 s instead of 94.1 s.
 
 → [The full test](bench/results/P4-0900-peak/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -409,7 +414,7 @@ P2, P3 and P4 ran again on 2026-11-19 with the scheduler's N+1 fixed and nothing
 - **Capacity tripled.** This machine went from ~330 jobs/s with any number of executors to 1,019 jobs/s with 3 (p99 1.23 s), and the 09:00 peak from 94 s to 38 s.
 - **The next limit is the executors' CPU, and it scales out.** 2 executors at 400/s went from 336/s to 398/s, and 3 from 330/s to 407/s.
 - **The executor needs admission control.** Past its capacity it claims up to as many jobs as it has free workers, 10,000, far more than half a CPU can fire. Throughput then falls, and results saved after the lease expires run again. About 1,000 workers per 0.5 vCPU did better than 10,000.
-- **GOMAXPROCS is not a free win.** The bench runs Go with 12 threads on half a CPU, because Go 1.25 cannot read the limit in WSL's hybrid cgroups ([P0](bench/results/P0-calibration/README.md)). Setting it to 1, as Go would on EKS, cut throttling by 60% but one executor's throughput by 20%. The value to test next is 2.
+- **GOMAXPROCS helps at the peak.** The bench ran Go with 12 threads on half a CPU, because Go 1.25 cannot read the limit in WSL's hybrid cgroups ([P0](bench/results/P0-calibration/README.md)). Set from each pod's CPU limit (1), it drained the 09:00 peak 11% faster with 64% less throttling and 23% less CPU, 45% more jobs per millicore ([P4](bench/results/P4-0900-peak/README.md#gomaxprocs-from-the-cpu-limit)). One executor far past its capacity did 20% worse with it. The manifests now set it.
 
 ### What could be improved
 
@@ -453,7 +458,7 @@ bench/scripts/down.sh           # delete everything except bench/results
 - **Fixed latency.** 1 ms without jitter, loss or tail, unlike a real network.
 - **Disk not capped.** `fsync` on a local SSD is far faster than on an RDS volume: database-bound numbers are an upper bound.
 - **Small tables.** The hot table fits in memory; in production it would be larger and miss the cache more often.
-- **GOMAXPROCS 12.** Go 1.25 cannot read the pods' CPU limit in WSL's hybrid cgroups, so every service runs 12 threads on its share of a CPU and gets throttled in bursts. On EKS with cgroup v2 Go would pick the limit; with `GOMAXPROCS=1` one executor ran 20% fewer jobs ([P0](bench/results/P0-calibration/README.md)).
+- **GOMAXPROCS 12 until round 2.** Go 1.25 cannot read the pods' CPU limit in WSL's hybrid cgroups, so round 1 and round 2 ran every service with 12 threads on its share of a CPU, throttled in bursts. The manifests now set it from the limit, as Go would on EKS with cgroup v2 ([P0](bench/results/P0-calibration/README.md)).
 - **One endpoint, plain HTTP.** No TLS, and connection reuse is easier than with thousands of customer hosts.
 - **A stall every ~30 s.** Now and then a whole second of jobs starts up to 1 s late, most likely the host's disk writeback; it puts a floor of ~0.8 s under the p99 of the lighter tests (see [P0](bench/results/P0-calibration/README.md)).
 - **Short runs.** Each test lasts minutes, the longest 30. Slow leaks, a full hour of history for the archiver, and the hourly and daily crons firing more than once need runs of hours.
