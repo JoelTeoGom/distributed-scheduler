@@ -99,27 +99,31 @@ layer(70, 200, 1900, 1070, C.green, C.greenFill, "WSL2 · Ubuntu 24.04 · 15 GB 
 layer(100, 260, 1840, 860, C.teal, C.tealFill, "Docker Engine 29 · the runtime of every container below");
 layer(130, 320, 1780, 780, C.orange, C.orangeFill, "VPC = docker network 172.28.0.0/16", { dashed: true });
 
-// docker compose: the databases and the latency proxy
-layer(160, 380, 470, 690, C.muted, "#fff", "docker compose · plays RDS", { size: 19 });
+// docker compose: the databases, the latency proxy and the customers' APIs
+layer(160, 380, 470, 690, C.muted, "#fff", "docker compose · RDS and the customers", { size: 19 });
 box(190, 440, 410, 150, C.red, { fill: C.redFill, radius: 12 });
 text(212, 478, "Toxiproxy · .12", { size: 22, color: C.red });
 text(212, 512, ["+1 ms on every reply", ":3306 -> MySQL   :9042 -> Cassandra"], { size: 17, color: C.muted, lineHeight: 1.45 });
 
-logo("mysql", 214, 650, 92, C.mysql);
-text(326, 676, "MySQL 8.4 · .10", { size: 21, color: C.mysql });
-text(326, 708, ["2 vCPU · 4 GB", "tasks + jobs (the queue)"], { size: 16, color: C.muted, lineHeight: 1.45 });
+logo("mysql", 214, 620, 92, C.mysql);
+text(326, 646, "MySQL 8.4 · .10", { size: 21, color: C.mysql });
+text(326, 678, ["2 vCPU · 4 GB", "tasks + jobs (the queue)"], { size: 16, color: C.muted, lineHeight: 1.45 });
 
-logo("apachecassandra", 214, 860, 92, C.cassandra);
-text(326, 886, "Cassandra 5 · .11", { size: 21, color: C.cassandra });
-text(326, 918, ["2 vCPU · 2 GB", "job history"], { size: 16, color: C.muted, lineHeight: 1.45 });
+logo("apachecassandra", 214, 790, 92, C.cassandra);
+text(326, 816, "Cassandra 5 · .11", { size: 21, color: C.cassandra });
+text(326, 848, ["2 vCPU · 2 GB", "job history"], { size: 16, color: C.muted, lineHeight: 1.45 });
 
-arrow([[188, 515], [174, 515], [174, 696], [206, 696]], C.red);
-arrow([[174, 696], [174, 906], [206, 906]], C.red);
+arrow([[188, 515], [174, 515], [174, 666], [206, 666]], C.red);
+arrow([[174, 666], [174, 836], [206, 836]], C.red);
+
+box(190, 935, 410, 110, C.orange, { fill: C.orangeFill, radius: 12 });
+text(212, 972, "fake-endpoint · .13", { size: 22, color: C.orange });
+text(212, 1006, ["4 CPU · 4 GB · plays the customers' APIs"], { size: 17, color: C.muted, lineHeight: 1.45 });
 
 // Kubernetes cluster
 layer(660, 380, 1220, 690, C.blue, C.blueFill, "Kubernetes cluster (k3d) · plays EKS · v1.35", { size: 19 });
 box(1500, 396, 360, 44, C.blue, { fill: "#fff", dashed: true, radius: 10 });
-text(1680, 425, "load balancer -> WSL :8080 :8081 :18090", { size: 15, color: C.blue, anchor: "middle" });
+text(1680, 425, "load balancer -> WSL :8080 :8081", { size: 15, color: C.blue, anchor: "middle" });
 arrow([[662, 515], [604, 515]], C.red);
 
 const nodes = [
@@ -138,7 +142,6 @@ const nodes = [
   ] },
   { name: "node-3", role: "worker · 4 GB RAM", color: C.blue, pods: [
     ["executor 2 of 2", ["0.5 vCPU · 1 GiB", "10,000 workers"], { fill: C.blueStrong }],
-    ["fake-endpoint", ["2 vCPU · 512 MiB", "plays the customers' APIs"], { color: C.orange, fill: C.orangeFill }],
     ["reconciler", ["0.5 vCPU · 1 GiB", "expired leases"]],
     ["task-service", ["0.5 vCPU · 1 GiB", "tasks API"]],
   ] },
