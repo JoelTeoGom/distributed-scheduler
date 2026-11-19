@@ -10,7 +10,7 @@ source "$(dirname "$0")/lib.sh"
 
 RESULTS=bench/results
 declare -A TEST_DIRS=([P1]=P1-smoke [P2]=P2-capacity [P3]=P3-normal-day [P4]=P4-0900-peak [P5]=P5-slow-endpoints
-  [P6]=P6-noisy-neighbour [P7]=P7-executor-dies [P8]=P8-mysql-outage [P9]=P9-long-run [P10]=P10-ceiling)
+  [P6]=P6-noisy-neighbour [P7]=P7-executor-dies [P8]=P8-mysql-outage [P9]=P9-long-run [P10]=P10-ceiling [P11]=P11-peak)
 ROUND="${ROUND:-}"
 
 label() { echo "${ROUND}${ROUND:+${1:+-}}${1:-}"; } # the run label, with the round in front
@@ -201,7 +201,12 @@ P3() {
 P4() {
   configure 2
   start P4 "$(label)"
-  seed model --duration 480 --peak-in 60
+  # P4_PEAK_OFFSET puts the peak that many seconds into the load (60 to 359), as in an earlier run, so both windows match.
+  local lead="${LEAD_SECONDS:-15}"
+  if [[ -n "${P4_PEAK_OFFSET:-}" ]]; then
+    lead=$(( (300 - ($(date +%s) + 15 + P4_PEAK_OFFSET) % 300) % 300 + 15 ))
+  fi
+  LEAD_SECONDS="$lead" seed model --duration 480 --peak-in 60
   local peak; peak="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["peak"])' "$OUT/workload.json")"
   echo "  09:00 peak at $(date -d "@$peak" +%T)"
   profile_at $(( peak - 3 ))
@@ -298,6 +303,20 @@ P10() {
   done
   set_env executor-service WORKER_COUNT=10000
   set_env scheduler-service SCHEDULE_INTERVAL=1s
+}
+
+P11() {
+  # The 09:00 peak alone: the model at P11_SCALE on P11_EXECUTORS executors, until 90 s after the peak. The peak lands
+  # on the next 5-minute mark at least a minute in, so a run never waits for a mark; every other knob is set beforehand.
+  configure "${P11_EXECUTORS:-2}"
+  start P11 "$(label "${P11_LABEL:-}")"
+  local start=$(( $(date +%s) + ${LEAD_SECONDS:-15} ))
+  local offset=$(( ( (start + 60 + 299) / 300 ) * 300 - start ))
+  seed model --duration $(( offset + 90 )) --peak-in 58 --scale "${P11_SCALE:-1}"
+  local peak; peak="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["peak"])' "$OUT/workload.json")"
+  echo "  09:00 peak at $(date -d "@$peak" +%T)"
+  profile_at $(( peak + 2 ))
+  finish 600
 }
 
 trap 'kill $TELEMETRY 2>/dev/null || true' EXIT

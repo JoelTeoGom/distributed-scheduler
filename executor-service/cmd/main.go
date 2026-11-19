@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/JoelTeoGom/distributed-scheduler/executor-service/internal/adapters/out/httpclient"
@@ -24,7 +25,10 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	db, err := mysql.Open(ctx, config.DatabaseDSN)
+	// In a container GOMAXPROCS should follow the CPU limit; logging it shows when it does not.
+	log.Printf("GOMAXPROCS=%d NumCPU=%d", runtime.GOMAXPROCS(0), runtime.NumCPU())
+
+	db, err := mysql.Open(ctx, config.DatabaseDSN, config.MaxOpenConnections, config.MaxIdleConnections)
 	if err != nil {
 		log.Fatalf("open database: %v", err)
 	}

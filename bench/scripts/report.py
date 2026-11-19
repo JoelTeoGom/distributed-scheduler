@@ -14,7 +14,7 @@ import re
 import statistics
 import subprocess
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 RUN = Path(sys.argv[1]).resolve()
@@ -230,6 +230,15 @@ def main():
         if peak_lags:
             extra.append(f"- **09:00 peak:** {len(peak_lags):,} jobs due on the same second. The last one started **{max(peak_lags):.1f} s** late"
                          f" (p50 {percentile(peak_lags, 50):.1f} s, p99 {percentile(peak_lags, 99):.1f} s); priority 0 p99 **{percentile(peak_p0, 99):.1f} s**.")
+            # How fast the peak was drained: its jobs over the time until the last one started, and its busiest second.
+            per_second = Counter(int(int(e["arrived_ms"]) / 1000) for e in first if int(float(e["scheduled_s"])) == workload["peak"])
+            drain = max(max(peak_lags), 1)
+            extra.append(f"- **Peak throughput:** {len(peak_lags) / drain:,.0f} jobs/s on average until the last one started,"
+                         f" {max(per_second.values()):,} in its busiest second.")
+            extra.append("- **Peak by priority** (p50 / p99 / max): " + "; ".join(
+                f"{priority}: {percentile(lags, 50):.1f} / {percentile(lags, 99):.1f} / {max(lags):.1f} s"
+                for priority, lags in sorted(defaultdict(list, {p: [float(e["lag_s"]) for e in first
+                    if int(float(e["scheduled_s"])) == workload["peak"] and e["priority"] == p] for p in "0123"}).items()) if lags) + ".")
     by_tenant = defaultdict(list)
     for e in first:
         by_tenant[e.get("tenant", "")].append(float(e["lag_s"]))
