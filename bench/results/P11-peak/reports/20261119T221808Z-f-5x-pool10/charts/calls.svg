@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Calls reaching the customers' endpoints</text>
+<text x="64" y="40" font-size="12" fill="#52514e">calls per second</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">1,250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">2,500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">3,750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">5,000</text>
+<text x="141.5" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="270.7" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:50</text>
+<text x="399.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:40</text>
+<text x="529.1" y="278" font-size="11" fill="#52514e" text-anchor="middle">2:30</text>
+<text x="658.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">3:20</text>
+<text x="787.5" y="278" font-size="11" fill="#52514e" text-anchor="middle">4:10</text>
+<line x1="141.5" x2="141.5" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="145.5" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="624.7" x2="624.7" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="628.7" y="65" font-size="11" fill="#52514e">load ends</text>
+<line x1="392.1" x2="392.1" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="396.1" y="65" font-size="11" fill="#52514e">09:00 peak</text>
+<path d="M430.9,260.0 L433.5,258.4 L436.1,259.3 L438.7,259.5 L441.2,259.8 L443.8,259.8 L446.4,259.8 L449.0,259.9 L451.6,259.6 L454.2,259.8 L456.7,259.8 L459.3,259.9 L461.9,259.8 L464.5,259.8 L467.1,259.8 L469.7,259.9 L472.2,259.8 L474.8,259.9 L477.4,259.8 L480.0,259.5 L482.6,259.8 L485.2,259.8 L487.8,259.8 L490.3,259.7 L492.9,259.8 L495.5,259.7 L498.1,259.8 L500.7,259.8 L503.3,259.6 L505.8,259.9 L508.4,259.7 L511.0,259.9 L513.6,259.9 L516.2,259.8 L518.8,259.9 L521.3,259.9 L523.9,259.9 L526.5,260.0 L529.1,259.8 L531.7,259.8 L534.3,259.5 L536.8,259.8 L539.4,259.9 L542.0,259.9 L544.6,259.8 L547.2,218.7 L549.8,259.8 L552.3,259.6 L554.9,259.8 L557.5,259.8 L560.1,259.6 L562.7,259.8 L565.3,259.8 L567.9,259.8 L570.4,259.8 L573.0,259.6 L575.6,259.7 L578.2,259.8 L580.8,259.9 L583.4,259.9 L585.9,259.8 L588.5,259.7 L591.1,259.8 L593.7,259.8 L596.3,259.8 L598.9,259.8 L601.4,259.8 L604.0,259.8 L606.6,259.8 L609.2,259.8 L611.8,259.5 L614.4,259.7 L616.9,259.9 L619.5,259.8 L622.1,259.8 L637.6,260.0 L666.0,260.0 L679.0,260.0 L684.1,260.0 L686.7,260.0 L704.8,260.0 L792.6,260.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M430.9,226.6 L433.5,154.5 L436.1,196.4 L438.7,246.6 L441.2,193.3 L443.8,168.0 L446.4,259.0 L449.0,259.8 L451.6,259.8 L454.2,259.8 L456.7,258.9 L459.3,252.5 L461.9,257.0 L464.5,259.3 L467.1,259.8 L469.7,257.9 L472.2,260.0 L474.8,260.0 L477.4,260.0 L480.0,260.0 L482.6,260.0 L485.2,260.0 L487.8,260.0 L490.3,260.0 L492.9,259.9 L495.5,260.0 L498.1,260.0 L500.7,260.0 L503.3,260.0 L505.8,260.0 L508.4,260.0 L511.0,260.0 L513.6,260.0 L516.2,260.0 L518.8,253.2 L521.3,253.9 L523.9,258.1 L526.5,258.8 L529.1,259.5 L531.7,259.0 L534.3,259.5 L536.8,259.5 L539.4,260.0 L542.0,260.0 L544.6,260.0 L547.2,256.6 L549.8,260.0 L552.3,260.0 L554.9,260.0 L557.5,260.0 L560.1,259.3 L562.7,260.0 L565.3,260.0 L567.9,260.0 L570.4,260.0 L573.0,260.0 L575.6,260.0 L578.2,260.0 L580.8,260.0 L583.4,260.0 L585.9,259.5 L588.5,260.0 L591.1,260.0 L593.7,260.0 L596.3,260.0 L598.9,260.0 L601.4,260.0 L604.0,260.0 L606.6,260.0 L609.2,260.0 L611.8,260.0 L614.4,260.0 L616.9,260.0 L619.5,260.0 L622.1,260.0 L637.6,259.8 L666.0,260.0 L679.0,260.0 L684.1,260.0 L686.7,260.0 L704.8,260.0 L792.6,260.0" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<text x="863.8" y="40" font-size="12" fill="#0b0b0b">retries</text>
+<line x1="841.8" x2="857.8" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="737.4" y="40" font-size="12" fill="#0b0b0b">first attempts</text>
+<line x1="715.4" x2="731.4" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

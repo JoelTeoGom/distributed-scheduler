@@ -22,8 +22,9 @@ The tests answer the questions a product owner would ask before launch. The work
 | [P8](#p8--mysql-outage) | If the database disappears for 30 seconds, do we lose anything? |
 | [P9](#p9--long-run) | After hours of running, is it still as fast as at the start? |
 | [P10](#p10--the-ceiling) | With the scheduler fixed, how many jobs per second can 1, 2 and 3 executors run, and how many workers do they need? |
+| [P11](#p11--peak-tuning) | How many jobs per second can the platform drain at the 09:00 peak, tuning only settings and replicas? |
 
-**Status:** every test ran on 2026-11-10. After the scheduler fix, P2, P3 and P4 ran again and P10 was added, on 2026-11-19. [What we learned](#5-what-we-learned) sums them up, and [round 2](#round-2-after-the-scheduler-fix) compares the two rounds.
+**Status:** every test ran on 2026-11-10. After the scheduler fix, P2, P3 and P4 ran again and P10 was added, on 2026-11-19; the peak was tuned in P11 on 2026-11-19 and 20, summed up step by step in [peak-tuning.pdf](docs/benchmarks/peak-tuning.pdf). [What we learned](#5-what-we-learned) sums them up, and [round 2](#round-2-after-the-scheduler-fix) compares the two rounds.
 
 > [!WARNING]
 > Every number here comes from an **emulated** AWS on one machine. It shows the order of magnitude and, above all, **what breaks first**. Comparisons between runs (1 vs 3 executors, before vs after a change) are more reliable than absolute values. See [threats to validity](#7-threats-to-validity).
@@ -48,7 +49,7 @@ The tests answer the questions a product owner would ask before launch. The work
 | executor-service × 2 | | worker nodes | 0.5 vCPU each | 1 GiB each |
 | scheduler-service | | a worker node | 0.5 vCPU | 1 GiB |
 | reconciler, archiver, task-service, job-service | | worker nodes | 0.5 vCPU each | 1 GiB each |
-| fake-endpoint | customers' APIs | a worker node | 2 vCPU | 512 MiB |
+| fake-endpoint | customers' APIs | docker compose, outside the cluster (a worker node until P11) | 4 vCPU (2 until P11) | 4 GB (512 MiB until P11) |
 | MySQL 8.4 | RDS `db.t4g.medium` | docker compose | 2 vCPU | 4 GB (3 GB buffer pool) |
 | Cassandra 5 | a small Cassandra node | docker compose | 2 vCPU | 2 GB |
 | Toxiproxy | the network between AZs | docker compose | | |
@@ -74,6 +75,8 @@ Every database poll runs faster than the defaults, and the executors have worker
 | scheduler | `SCHEDULE_INTERVAL` / `SCHEDULE_LOOKAHEAD` | 5 s / 30 s | **1 s / 10 s** |
 | reconciler | `RECONCILE_INTERVAL` | 1 min | **10 s** |
 | archiver | `ARCHIVE_INTERVAL` | 1 min | **10 s** |
+
+P11 tuned the peak further: a 200 ms scheduler tick, 4 executors, claims every 250 ms, 500 ms ahead, and GOMAXPROCS from each pod's CPU limit. Its table lists every value tried.
 
 The executor and the scheduler serve Go's `pprof` on `:6060` (`PPROF_ADDR`), off unless set.
 
@@ -389,6 +392,39 @@ Each test has its question, what it does, its results and conclusions here, and 
 
 → [The full test](bench/results/P10-ceiling/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
+### P11 · Peak tuning
+
+> How many jobs per second can the platform drain at the 09:00 peak, tuning only settings and replicas?
+
+**What we test:** the 09:00 peak in a short run, ~30,000 jobs due on one second, changing one setting per run and keeping what won: the scheduler's tick and batch size, the number of executors, their workers, claim interval and pool, then the executors at 1 CPU, then three times the peak.
+
+<!-- results:P11 -->
+| Run | Jobs | Succeeded | Dead | Unfinished | Duplicates | Calls/s | Start delay p50 / p90 / p99 / max |
+|---|---|---|---|---|---|---|---|
+| [a-base](bench/results/P11-peak/reports/20261119T214410Z-a-base/report.md) | 38,361 | 37,914 | 447 | 0 | 78 | 82.9 | 3.48 / 26.95 / 36.63 / 36.83 s |
+| [b-tick200ms](bench/results/P11-peak/reports/20261119T215303Z-b-tick200ms/report.md) | 33,067 | 32,628 | 439 | 0 | 133 | 130.6 | 3.08 / 5.13 / 32.60 / 32.76 s |
+| [c-4x](bench/results/P11-peak/reports/20261119T215757Z-c-4x/report.md) | 33,094 | 32,709 | 385 | 0 | 0 | 168.8 | 2.32 / 4.60 / 5.23 / 5.43 s |
+| [d-5x](bench/results/P11-peak/reports/20261119T220633Z-d-5x/report.md) | 35,567 | 35,093 | 474 | 0 | 0 | 19.8 | 0.11 / 5.21 / 6.72 / 6.72 s |
+| [e-5x-w2000](bench/results/P11-peak/reports/20261119T221251Z-e-5x-w2000/report.md) | 33,133 | 32,765 | 368 | 0 | 0 | 163.2 | 5.15 / 10.00 / 12.16 / 12.79 s |
+| [f-5x-pool10](bench/results/P11-peak/reports/20261119T221808Z-f-5x-pool10/report.md) | 33,039 | 32,569 | 470 | 0 | 0 | 19.7 | 0.12 / 0.20 / 8.48 / 9.09 s |
+| [s1-4x](bench/results/P11-peak/reports/20261119T222742Z-s1-4x/report.md) | 34,183 | 33,812 | 371 | 0 | 0 | 161.2 | 2.35 / 3.89 / 4.29 / 5.17 s |
+| [s2-5x](bench/results/P11-peak/reports/20261119T223300Z-s2-5x/report.md) | 33,083 | 32,745 | 338 | 0 | 0 | 170.5 | 3.47 / 5.17 / 6.36 / 7.00 s |
+| [s3-6x](bench/results/P11-peak/reports/20261119T223800Z-s3-6x/report.md) | 33,078 | 32,709 | 369 | 0 | 1 | 172.0 | 2.80 / 5.52 / 6.03 / 6.10 s |
+| [t1-4x-w5000](bench/results/P11-peak/reports/20261119T224312Z-t1-4x-w5000/report.md) | 33,011 | 32,647 | 364 | 0 | 0 | 183.1 | 1.43 / 10.59 / 12.27 / 12.93 s |
+| [t2-4x-w2000](bench/results/P11-peak/reports/20261119T224758Z-t2-4x-w2000/report.md) | 33,094 | 32,746 | 348 | 0 | 0 | 168.8 | 5.19 / 11.83 / 13.29 / 13.75 s |
+| [t3-4x-batch5000](bench/results/P11-peak/reports/20261119T225304Z-t3-4x-batch5000/report.md) | 1,586 | 1,571 | 15 | 0 | 0 | 16.0 | 0.32 / 0.37 / 0.38 / 0.96 s |
+| [t4-4x-claim250ms](bench/results/P11-peak/reports/20261119T225647Z-t4-4x-claim250ms/report.md) | 34,483 | 34,088 | 395 | 0 | 0 | 129.6 | 2.38 / 3.77 / 4.19 / 4.29 s |
+| [t3b-batch4000](bench/results/P11-peak/reports/20261119T230348Z-t3b-batch4000/report.md) | 38,483 | 38,043 | 440 | 0 | 1 | 86.3 | 2.28 / 4.06 / 8.89 / 9.56 s |
+| [v1-scale3](bench/results/P11-peak/reports/20261119T231300Z-v1-scale3/report.md) | 99,250 | 97,718 | 1,532 | 0 | 1210 | 339.3 | 6.38 / 32.29 / 61.37 / 63.50 s |
+| [u1-1cpu](bench/results/P11-peak/reports/20261119T231817Z-u1-1cpu/report.md) | 32,989 | 32,667 | 322 | 0 | 0 | 186.4 | 1.59 / 2.11 / 2.27 / 2.28 s |
+| [v2-scale3-1cpu](bench/results/P11-peak/reports/20261119T232256Z-v2-scale3-1cpu/report.md) | 99,300 | 98,126 | 1,174 | 0 | 882 | 444.3 | 5.37 / 35.51 / 44.86 / 48.99 s |
+| [v3-scale3-w5000](bench/results/P11-peak/reports/20261119T232813Z-v3-scale3-w5000/report.md) | 99,033 | 97,904 | 1,129 | 0 | 122 | 523.4 | 12.60 / 38.59 / 57.64 / 58.47 s |
+<!-- /results:P11 -->
+
+**Conclusions:** with the same resources, 6,998 jobs/s, every job of the peak started in 4.3 s: a 200 ms scheduler tick, 4 executors and claims every 250 ms. At 1 CPU per executor, 13,166 jobs/s in 2.3 s. Beyond 4 executors MySQL sets the pace; fewer workers trade throughput for priority (priority 0 within 0.8 s at 2,000). Three times the peak does not scale: each executor opens too many calls at once and MySQL runs at 80 to 90%, so the best run took 70 s.
+
+→ [The full test](bench/results/P11-peak/README.md): every run, its hypothesis, charts, resources and CPU profiles.
+
 ## 5. What we learned
 
 > [!IMPORTANT]
@@ -419,6 +455,21 @@ P2, P3 and P4 ran again on 2026-11-19 with the scheduler's N+1 fixed and nothing
 - **The next limit is the executors' CPU, and it scales out.** 2 executors at 400/s went from 336/s to 398/s, and 3 from 330/s to 407/s.
 - **The executor needs admission control.** Past its capacity it claims up to as many jobs as it has free workers, 10,000, far more than half a CPU can fire. Throughput then falls, and results saved after the lease expires run again. About 1,000 workers per 0.5 vCPU did better than 10,000.
 - **GOMAXPROCS helps at the peak.** The bench ran Go with 12 threads on half a CPU, because Go 1.25 cannot read the limit in WSL's hybrid cgroups ([P0](bench/results/P0-calibration/README.md)). Set from each pod's CPU limit (1), it drained the 09:00 peak 25% faster with 64% less throttling and 23% less CPU, 63% more jobs per millicore ([P4](bench/results/P4-0900-peak/README.md#gomaxprocs-from-the-cpu-limit)). One executor far past its capacity did 20% worse with it. The manifests now set it.
+
+### Peak tuning, step by step
+
+The 09:00 peak, ~30,000 jobs due on one second. Each step keeps the ones before it; the first three were measured with P4, the rest with [P11](#p11--peak-tuning). A job counts as started when it first reached the endpoint, retries included. [peak-tuning.pdf](docs/benchmarks/peak-tuning.pdf) tells the same story with charts.
+
+| Step | Jobs/s draining the peak | Every job started | Priority 0, worst |
+|---|---|---|---|
+| Round 1 | 319 | 94.1 s | 91.9 s |
+| Fix the scheduler's N+1 | 599 | 50.1 s | 23.6 s |
+| GOMAXPROCS from the CPU limit | 749 | 40.0 s | 34.5 s |
+| Scheduler tick 200 ms, 4 executors | 5,810 | 5.2 s | 2.7 s |
+| Claims every 250 ms, 500 ms ahead | **6,998** | **4.3 s** | 4.0 s |
+| Executors at 1 CPU, the only change of resources | **13,166** | **2.3 s** | 2.1 s |
+
+×22 with the same resources, ×41 at 1 CPU. Single runs differ by up to ~30% with the same settings, so only the large steps count.
 
 ### What could be improved
 
@@ -465,4 +516,6 @@ bench/scripts/down.sh           # delete everything except bench/results
 - **GOMAXPROCS 12 until round 2.** Go 1.25 cannot read the pods' CPU limit in WSL's hybrid cgroups, so round 1 and round 2 ran every service with 12 threads on its share of a CPU, throttled in bursts. The manifests now set it from the limit, as Go would on EKS with cgroup v2 ([P0](bench/results/P0-calibration/README.md)).
 - **One endpoint, plain HTTP.** No TLS, and connection reuse is easier than with thousands of customer hosts.
 - **A stall every ~30 s.** Now and then a whole second of jobs starts up to 1 s late, most likely the host's disk writeback; it puts a floor of ~0.8 s under the p99 of the lighter tests (see [P0](bench/results/P0-calibration/README.md)).
+- **The fake endpoint ran in the cluster until P11,** with 512 MiB. Above ~30,000 open calls it was OOM-killed; it now runs in docker compose with 4 GB and never came close to its limit.
+- **Single runs.** Each setting ran once; two runs with the same settings differed by up to ~30% (749 and 558 jobs/s at the peak).
 - **Short runs.** Each test lasts minutes, the longest 30. Slow leaks, a full hour of history for the archiver, and the hourly and daily crons firing more than once need runs of hours.
