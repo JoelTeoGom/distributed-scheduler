@@ -201,7 +201,12 @@ P3() {
 P4() {
   configure 2
   start P4 "$(label)"
-  seed model --duration 480 --peak-in 60
+  # P4_PEAK_OFFSET puts the peak that many seconds into the load (60 to 359), as in an earlier run, so both windows match.
+  local lead="${LEAD_SECONDS:-15}"
+  if [[ -n "${P4_PEAK_OFFSET:-}" ]]; then
+    lead=$(( (300 - ($(date +%s) + 15 + P4_PEAK_OFFSET) % 300) % 300 + 15 ))
+  fi
+  LEAD_SECONDS="$lead" seed model --duration 480 --peak-in 60
   local peak; peak="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["peak"])' "$OUT/workload.json")"
   echo "  09:00 peak at $(date -d "@$peak" +%T)"
   profile_at $(( peak - 3 ))
