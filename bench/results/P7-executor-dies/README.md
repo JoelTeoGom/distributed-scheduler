@@ -129,6 +129,6 @@ Run page: [reports/20261110T201711Z/report.md](reports/20261110T201711Z/report.m
 **Nothing lost, nothing run twice.**
 
 - Every job reached the endpoint on its first attempt, no job succeeded twice, and nothing was left pending after the drain.
-- The kill caused no visible delay. The 1,009 jobs more than 5 s late (worst 6 s) are P3's 5-minute batch from the scheduler, not the kill.
+- The kill caused no visible delay. The 1,009 jobs more than 5 s late (worst 6 s) are P3's 5-minute batch from the scheduler, not the kill (the scheduler's part since fixed, see [P2](../P2-capacity/README.md#fixed-an-n1-in-the-scheduler)).
 
 The kill came at 3:08, between bursts. An executor claims jobs at most 1 s ahead and most calls take 150 ms, so at that moment it held few jobs. A kill during a burst, or while slow calls are in flight, would test the reconciler much harder: those jobs wait for their lease to expire, about a minute.

@@ -678,12 +678,25 @@ Run page: [reports/20261110T193552Z-3x-400/report.md](reports/20261110T193552Z-3
 
 ## Conclusions
 
-**About 300 jobs per second, and adding executors does not help, because the limit is the scheduler.**
+**About 300 jobs per second, and adding executors does not help, because the limit is the scheduler.** **Fixed:** that limit was an N+1 ([below](#fixed-an-n1-in-the-scheduler)).
 
 - Up to 200 jobs/s one executor keeps up with everything. The p99 of 0.8 s at those rates comes from 2 or 3 seconds out of 60 that start late as a block, not from the load (see [P0](../P0-calibration/README.md)).
 - At 400 jobs/s, one executor sustains 301/s, two 336/s and three 330/s. More executors barely move it.
-- **The scheduler sets the ceiling.** It turns at most 1,000 tasks into jobs per tick, and updates each task with its own statement, one round trip to MySQL each. A tick of 1,000 tasks takes about 3.3 s, so it creates about 300 jobs per second, however often it ticks.
+- **The scheduler sets the ceiling.** It turns at most 1,000 tasks into jobs per tick, and updates each task with its own statement, one round trip to MySQL each. ~~A tick of 1,000 tasks takes about 3.3 s, so it creates about 300 jobs per second, however often it ticks.~~ **Fixed:** an N+1, now one statement per tick.
 - The telemetry shows it: the pending queue rises and falls in steps of exactly 1,000 and sits at 0 most of the time, so the executors are waiting for jobs, not the other way round. The scheduler used about 100 of its 500 millicores: it waits on the database, it does not run out of CPU.
-- A direct probe confirmed it: 10,000 tasks due at 1,000 per second came out as 1,000 jobs every 3.3 s, the last ones created after their time.
+- A direct probe confirmed it: 10,000 tasks due at 1,000 per second came out as 1,000 jobs every ~~3.3 s~~, the last ones created after their time. **Fixed.**
 - With one executor at 400/s, the executor also reached its 0.5 vCPU limit and was throttled, with thousands of jobs claimed and waiting to be fired. That is why one executor stopped at 301/s and not at the scheduler's ~335/s.
 - MySQL and the rest of the hardware had room left: MySQL peaked at about 1,800 commits/s with 2 CPUs and at most 1 row lock wait per second.
+
+### Fixed: an N+1 in the scheduler
+
+_2026-11-11, after the run._ `ScheduleJobs` inserted the 1,000 jobs in one statement, then updated each task's `next_run_at` with its own `UPDATE`: 1,000 round trips per tick, each paying the network to MySQL. It now updates the whole batch in one statement, `UPDATE tasks JOIN (VALUES ROW(…), …)`, joined on the primary key.
+
+Re-measured with the scheduler alone and the same load as the probe: 10,000 one-off tasks due at 1,000 per second, `ScheduleJobs` called back to back until every task had its job. Before and after ran on the same machine, MySQL 8.4 in Docker, with and without a Toxiproxy adding 1 ms like the bench. It was not k3d, so compare the two columns with each other, not with the 3.3 s above.
+
+| Network to MySQL | Tick of 1,000, before | After | Jobs/s, before → after |
+|---|---|---|---|
+| Toxiproxy, +1 ms | 5.50 s | 54 ms | 182 → 18,360 |
+| Direct | 380 ms | 40 ms | 2,634 → 24,760 |
+
+Both versions created all 10,000 jobs, 1,000 per tick. With latency the tick is about 100 times faster, because it no longer pays one round trip per task. The conclusions above still hold for that run: the scheduler was the ceiling and more executors could not move it. It should no longer be the ceiling; running P2 again will show the next one, most likely the executors' 0.5 vCPU, which already throttled one executor at 400/s.

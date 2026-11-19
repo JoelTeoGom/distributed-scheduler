@@ -214,7 +214,7 @@ Each test has its question, what it does, its results and conclusions here, and 
 ![Capacity](bench/results/P2-capacity/capacity.svg)
 <!-- /results:P2 -->
 
-**Conclusions:** About 300 jobs/s, and more executors do not help: the **scheduler** is the limit. It creates at most 1,000 jobs per tick with one `UPDATE` per task, ~3.3 s per tick, so ~300 jobs/s; it used 100 of its 500 millicores, waiting on the database. The executors sit idle waiting for jobs, and MySQL had room left.
+**Conclusions:** About 300 jobs/s, and more executors do not help: the **scheduler** is the limit. It creates at most 1,000 jobs per tick with one `UPDATE` per task, ~~about 3.3 s per tick, so about 300 jobs/s~~ (**fixed:** an N+1, now one statement per tick, [details](bench/results/P2-capacity/README.md#fixed-an-n1-in-the-scheduler)); it used 100 of its 500 millicores, waiting on the database. The executors sit idle waiting for jobs, and MySQL had room left.
 
 → [The full test](bench/results/P2-capacity/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -230,7 +230,7 @@ Each test has its question, what it does, its results and conclusions here, and 
 | [run](bench/results/P3-normal-day/reports/20261110T193822Z/report.md) | 10,667 | 10,496 | 171 | 0 | 0 | 35.7 | 0.60 / 2.19 / 6.67 / 6.68 s |
 <!-- /results:P3 -->
 
-**Conclusions:** On ordinary seconds yes (≤ 0.9 s); at the 5-minute mark, with 5,005 jobs due at once, no: 6.7 s. Part is the executors firing ~3,000 calls at 0.5 vCPU (~2 s), most is the scheduler's last batches of 1,000 arriving after their time.
+**Conclusions:** On ordinary seconds yes (≤ 0.9 s); at the 5-minute mark, with 5,005 jobs due at once, no: 6.7 s. Part is the executors firing ~3,000 calls at 0.5 vCPU (~2 s), most is the scheduler's last batches of 1,000 arriving after their time. **Fixed** for the scheduler's part (see P2); the executors' ~2 s remains.
 
 → [The full test](bench/results/P3-normal-day/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -248,7 +248,7 @@ Each test has its question, what it does, its results and conclusions here, and 
 - **09:00 peak:** 30,007 jobs due on the same second. The last one started **94.1 s** late (p50 43.3 s, p99 91.7 s); priority 0 p99 **91.6 s**.
 <!-- /results:P4 -->
 
-**Conclusions:** No: 94 s for the whole peak, against 60 s, and priority 0 as late as everyone else. The scheduler creates the 30 batches of 1,000 in ~100 s and picks tasks by time alone, so priority cannot help jobs that do not exist yet.
+**Conclusions:** No: 94 s for the whole peak, against 60 s, and priority 0 as late as everyone else. The scheduler creates the 30 batches of 1,000 in ~~about 100 s~~ (**fixed**, see P2) and picks tasks by time alone, so priority cannot help jobs that do not exist yet (still open).
 
 → [The full test](bench/results/P4-0900-peak/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -343,6 +343,8 @@ Each test has its question, what it does, its results and conclusions here, and 
 
 > [!IMPORTANT]
 > **The bottleneck is the scheduler, not the hardware.** One scheduler creates about 300 jobs per second, because each tick takes at most 1,000 tasks and updates each one with its own round trip to MySQL. It sets the capacity (P2), the 6.7 s at every 5-minute burst (P3) and the 94 s of the 09:00 peak (P4), while it uses a fifth of its CPU. Ticking more often does not help, since a tick already lasts longer than the interval; fewer round trips per tick, or several schedulers, would.
+>
+> **Fixed after the run (2026-11-11):** the round trip per task was an N+1, and one statement now advances the whole batch. With the same load as the P2 probe, a tick of 1,000 tasks went from 5.50 s to 54 ms with 1 ms of latency to MySQL ([details](bench/results/P2-capacity/README.md#fixed-an-n1-in-the-scheduler)). The numbers in this page predate the fix; the conclusions below still hold, and P2 has to run again to find the next limit.
 
 1. **The hardware is not the problem.** With 0.5 vCPU per service, 2 CPUs for MySQL and 4 GB nodes, nothing ran out except the executor's CPU for a second or two at each burst. MySQL peaked at ~2,500 commits/s with at most 3 row lock waits per second. The rest never saw more than ~330 jobs/s, though, because the scheduler did not let it: once the scheduler is faster, the next limit will show.
 2. **The next limit is the executor, at bursts, and it scales out.** Two executors at 0.5 vCPU take ~2 s to fire 3,000 calls at once (P3). Unlike the scheduler, more replicas or more CPU fix it.
