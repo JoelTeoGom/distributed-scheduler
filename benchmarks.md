@@ -21,8 +21,9 @@ The tests answer the questions a product owner would ask before launch. The work
 | [P7](#p7--an-executor-dies) | If a server dies in the middle of the work, are its jobs lost or run twice? |
 | [P8](#p8--mysql-outage) | If the database disappears for 30 seconds, do we lose anything? |
 | [P9](#p9--long-run) | After hours of running, is it still as fast as at the start? |
+| [P10](#p10--the-ceiling) | With the scheduler fixed, how many jobs per second can 1, 2 and 3 executors run, and how many workers do they need? |
 
-**Status:** every test ran on 2026-11-10. [What we learned](#5-what-we-learned) sums them up.
+**Status:** every test ran on 2026-11-10. After the scheduler fix, P2, P3 and P4 ran again and P10 was added, on 2026-11-19. [What we learned](#5-what-we-learned) sums them up, and [round 2](#round-2-after-the-scheduler-fix) compares the two rounds.
 
 > [!WARNING]
 > Every number here comes from an **emulated** AWS on one machine. It shows the order of magnitude and, above all, **what breaks first**. Comparisons between runs (1 vs 3 executors, before vs after a change) are more reliable than absolute values. See [threats to validity](#7-threats-to-validity).
@@ -210,11 +211,18 @@ Each test has its question, what it does, its results and conclusions here, and 
 | [1x-400](bench/results/P2-capacity/reports/20261110T193042Z-1x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 300.9 | 3.36 / 21.85 / 26.65 / 27.95 s |
 | [2x-400](bench/results/P2-capacity/reports/20261110T193326Z-2x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 336.5 | 3.52 / 11.73 / 13.92 / 14.22 s |
 | [3x-400](bench/results/P2-capacity/reports/20261110T193552Z-3x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 330.3 | 4.28 / 12.47 / 14.67 / 16.07 s |
+| [r2-1x-50](bench/results/P2-capacity/reports/20261119T202410Z-r2-1x-50/report.md) | 3,000 | 3,000 | 0 | 0 | 0 | 50.8 | 0.00 / 0.01 / 0.62 / 0.62 s |
+| [r2-1x-100](bench/results/P2-capacity/reports/20261119T202620Z-r2-1x-100/report.md) | 6,000 | 6,000 | 0 | 0 | 0 | 101.7 | 0.00 / 0.01 / 0.64 / 0.65 s |
+| [r2-1x-200](bench/results/P2-capacity/reports/20261119T202828Z-r2-1x-200/report.md) | 12,000 | 12,000 | 0 | 0 | 0 | 203.3 | 0.01 / 0.10 / 0.53 / 0.53 s |
+| [r2-1x-400](bench/results/P2-capacity/reports/20261119T203217Z-r2-1x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 327.3 | 3.46 / 13.85 / 19.34 / 20.55 s |
+| [r2-2x-400](bench/results/P2-capacity/reports/20261119T203410Z-r2-2x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 397.5 | 0.01 / 0.39 / 1.09 / 1.95 s |
+| [r2-3x-400](bench/results/P2-capacity/reports/20261119T203538Z-r2-3x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 406.7 | 0.01 / 0.12 / 0.62 / 0.84 s |
+| [r3-1x-400](bench/results/P2-capacity/reports/20261119T210827Z-r3-1x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 260.5 | 0.06 / 11.75 / 20.25 / 21.35 s |
 
 ![Capacity](bench/results/P2-capacity/capacity.svg)
 <!-- /results:P2 -->
 
-**Conclusions:** About 300 jobs/s, and more executors do not help: the **scheduler** is the limit. It creates at most 1,000 jobs per tick with one `UPDATE` per task, ~~about 3.3 s per tick, so about 300 jobs/s~~ (**fixed:** an N+1, now one statement per tick, [details](bench/results/P2-capacity/README.md#fixed-an-n1-in-the-scheduler)); it used 100 of its 500 millicores, waiting on the database. The executors sit idle waiting for jobs, and MySQL had room left.
+**Conclusions:** About 300 jobs/s, and more executors do not help: the **scheduler** is the limit. It creates at most 1,000 jobs per tick with one `UPDATE` per task, ~~about 3.3 s per tick, so about 300 jobs/s~~ (**fixed:** an N+1, now one statement per tick, [details](bench/results/P2-capacity/README.md#fixed-an-n1-in-the-scheduler)); it used 100 of its 500 millicores, waiting on the database. The executors sit idle waiting for jobs, and MySQL had room left. **Round 2, after the fix:** 1, 2 and 3 executors do 327, 398 and 407 jobs/s at 400 offered, with p99 19.3, 1.09 and 0.62 s. Executors scale out, and the new limit is one executor's 0.5 vCPU at ~330 jobs/s. `GOMAXPROCS=1` lowered the throttling but also the throughput, to 260/s.
 
 → [The full test](bench/results/P2-capacity/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -228,9 +236,10 @@ Each test has its question, what it does, its results and conclusions here, and 
 | Run | Jobs | Succeeded | Dead | Unfinished | Duplicates | Calls/s | Start delay p50 / p90 / p99 / max |
 |---|---|---|---|---|---|---|---|
 | [run](bench/results/P3-normal-day/reports/20261110T193822Z/report.md) | 10,667 | 10,496 | 171 | 0 | 0 | 35.7 | 0.60 / 2.19 / 6.67 / 6.68 s |
+| [r2](bench/results/P3-normal-day/reports/20261119T203712Z-r2/report.md) | 10,667 | 10,576 | 91 | 0 | 0 | 35.7 | 0.31 / 2.18 / 2.28 / 2.28 s |
 <!-- /results:P3 -->
 
-**Conclusions:** On ordinary seconds yes (≤ 0.9 s); at the 5-minute mark, with 5,005 jobs due at once, no: 6.7 s. Part is the executors firing ~3,000 calls at 0.5 vCPU (~2 s), most is the scheduler's last batches of 1,000 arriving after their time. **Fixed** for the scheduler's part (see P2); the executors' ~2 s remains.
+**Conclusions:** On ordinary seconds yes (≤ 0.9 s); at the 5-minute mark, with 5,005 jobs due at once, no: 6.7 s. Part is the executors firing ~3,000 calls at 0.5 vCPU (~2 s), most is the scheduler's last batches of 1,000 arriving after their time. **Fixed** for the scheduler's part (see P2); the executors' ~2 s remains. **Round 2, after the fix:** p99 2.28 s. Every job is claimed on time; the 5-minute burst is now the executors' CPU alone, and one-off jobs have a p99 of 0.57 s.
 
 → [The full test](bench/results/P3-normal-day/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -244,11 +253,14 @@ Each test has its question, what it does, its results and conclusions here, and 
 | Run | Jobs | Succeeded | Dead | Unfinished | Duplicates | Calls/s | Start delay p50 / p90 / p99 / max |
 |---|---|---|---|---|---|---|---|
 | [run](bench/results/P4-0900-peak/reports/20261110T194554Z/report.md) | 44,667 | 44,168 | 499 | 0 | 1 | 90.3 | 23.36 / 77.38 / 91.74 / 94.14 s |
+| [r2](bench/results/P4-0900-peak/reports/20261119T204356Z-r2/report.md) | 39,667 | 39,266 | 401 | 0 | 20 | 80.9 | 6.53 / 23.44 / 37.16 / 37.77 s |
 
 - **09:00 peak:** 30,007 jobs due on the same second. The last one started **94.1 s** late (p50 43.3 s, p99 91.7 s); priority 0 p99 **91.6 s**.
+
+- **09:00 peak:** 29,099 jobs due on the same second. The last one started **37.8 s** late (p50 9.0 s, p99 37.6 s); priority 0 p99 **23.4 s**.
 <!-- /results:P4 -->
 
-**Conclusions:** No: 94 s for the whole peak, against 60 s, and priority 0 as late as everyone else. The scheduler creates the 30 batches of 1,000 in ~~about 100 s~~ (**fixed**, see P2) and picks tasks by time alone, so priority cannot help jobs that do not exist yet (still open).
+**Conclusions:** No: 94 s for the whole peak, against 60 s, and priority 0 as late as everyone else. The scheduler creates the 30 batches of 1,000 in ~~about 100 s~~ (**fixed**, see P2) and picks tasks by time alone, so priority cannot help jobs that do not exist yet (still open). **Round 2, after the fix:** the last job of the peak started 37.8 s late, within the 60 s, and priority 0 and 1 were done by 23.6 s against 37.8 s for 2 and 3. Priority 0 is still far from its 5 s; the executors' CPU is now the limit.
 
 → [The full test](bench/results/P4-0900-peak/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
@@ -339,6 +351,35 @@ Each test has its question, what it does, its results and conclusions here, and 
 
 → [The full test](bench/results/P9-long-run/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
 
+### P10 · The ceiling
+
+> With the scheduler fixed, how many jobs per second can 1, 2 and 3 executors run, and how many workers do they need?
+
+**What we test:** round 2, after the scheduler fix, same resources, with the scheduler ticking every 200 ms so its 1,000 jobs per tick do not cap the test. Fast endpoints at 1,000 to 4,000 jobs per second in 30-second steps on 1, 2 and 3 executors, then 2 executors with 250 to 30,000 workers each, at 1,000 and at 400 jobs per second.
+
+<!-- results:P10 -->
+| Run | Jobs | Succeeded | Dead | Unfinished | Duplicates | Calls/s | Start delay p50 / p90 / p99 / max |
+|---|---|---|---|---|---|---|---|
+| [1x-1000](bench/results/P10-ceiling/reports/20261119T205322Z-1x-1000/report.md) | 30,000 | 30,000 | 0 | 0 | 48 | 330.6 | 4.26 / 55.50 / 63.03 / 64.83 s |
+| [2x-1000](bench/results/P10-ceiling/reports/20261119T205530Z-2x-1000/report.md) | 30,000 | 30,000 | 0 | 0 | 0 | 874.0 | 0.48 / 2.03 / 2.93 / 6.33 s |
+| [3x-1000](bench/results/P10-ceiling/reports/20261119T205642Z-3x-1000/report.md) | 30,000 | 30,000 | 0 | 0 | 0 | 1019.4 | 0.18 / 0.47 / 1.23 / 1.25 s |
+| [3x-2000](bench/results/P10-ceiling/reports/20261119T205737Z-3x-2000/report.md) | 60,000 | 60,000 | 0 | 0 | 313 | 803.4 | 5.55 / 23.94 / 43.54 / 44.12 s |
+| [2x-1000-w250](bench/results/P10-ceiling/reports/20261119T205934Z-2x-1000-w250/report.md) | 30,000 | 30,000 | 0 | 0 | 0 | 469.9 | 6.13 / 42.45 / 47.57 / 48.45 s |
+| [2x-1000-w1000](bench/results/P10-ceiling/reports/20261119T210102Z-2x-1000-w1000/report.md) | 30,000 | 30,000 | 0 | 0 | 0 | 902.3 | 0.20 / 6.49 / 11.98 / 12.35 s |
+| [2x-1000-w10000](bench/results/P10-ceiling/reports/20261119T210202Z-2x-1000-w10000/report.md) | 30,000 | 30,000 | 0 | 0 | 0 | 855.7 | 0.62 / 3.12 / 9.31 / 10.41 s |
+| [2x-1000-w30000](bench/results/P10-ceiling/reports/20261119T210314Z-2x-1000-w30000/report.md) | 30,000 | 30,000 | 0 | 0 | 0 | 801.0 | 1.04 / 4.73 / 7.73 / 13.31 s |
+| [2x-400-w250](bench/results/P10-ceiling/reports/20261119T210435Z-2x-400-w250/report.md) | 12,000 | 12,000 | 0 | 0 | 0 | 397.6 | 0.01 / 0.67 / 4.47 / 5.19 s |
+| [2x-400-w1000](bench/results/P10-ceiling/reports/20261119T210532Z-2x-400-w1000/report.md) | 12,000 | 12,000 | 0 | 0 | 0 | 415.6 | 0.08 / 0.28 / 0.39 / 0.49 s |
+| [2x-400-w10000](bench/results/P10-ceiling/reports/20261119T210628Z-2x-400-w10000/report.md) | 12,000 | 12,000 | 0 | 0 | 0 | 413.5 | 0.01 / 0.08 / 0.37 / 0.37 s |
+| [2x-400-w30000](bench/results/P10-ceiling/reports/20261119T210723Z-2x-400-w30000/report.md) | 12,000 | 12,000 | 0 | 0 | 0 | 410.4 | 0.01 / 0.24 / 1.01 / 1.01 s |
+
+![Capacity](bench/results/P10-ceiling/capacity.svg)
+<!-- /results:P10 -->
+
+**Conclusions:** about 1,000 jobs/s on this machine, with 3 executors (p99 1.23 s). Each 0.5 vCPU executor fires ~330 to 440 jobs/s; past the knee throughput falls (803/s at 2,000 offered), and results saved too late make the reconciler run jobs twice (313). About 1,000 workers per executor are enough; 10,000 or 30,000 admit more work than the CPU can do.
+
+→ [The full test](bench/results/P10-ceiling/README.md): how it runs, what to look at, every chart, resources and CPU profiles.
+
 ## 5. What we learned
 
 > [!IMPORTANT]
@@ -353,13 +394,30 @@ Each test has its question, what it does, its results and conclusions here, and 
 5. **Timeouts shorter than the endpoint repeat work at the customer.** The executor gives up, the endpoint finishes anyway, and the retry runs it again: 4,326 times in P5 with a 20 s timeout.
 6. **Priority only orders what already exists.** At the 09:00 peak, priority 0 was as late as priority 3 (P4).
 
+### Round 2: after the scheduler fix
+
+P2, P3 and P4 ran again on 2026-11-19 with the scheduler's N+1 fixed and nothing else changed, and [P10](#p10--the-ceiling) pushed the executors to their limit.
+
+| Piece | Round 1 | Round 2 | Evidence |
+|---|---|---|---|
+| Scheduler | ❌ the bottleneck | ✅ fixed | ~300 jobs/s because of the N+1. Now a tick of 1,000 tasks takes ~54 ms, and the scheduler peaks at 18 to 41 millicores instead of ~120. Its own setting, 1,000 jobs per tick and one tick a second, now caps it at 1,000 jobs/s (P10 ticked every 200 ms). Priority at the source is still open. |
+| Executors | ⚠️ the next limit | ❌ the bottleneck | 330 to 440 jobs/s each at 0.5 vCPU, at their quota and throttled 6 to 11 s/s in every overloaded step. They are the 2.3 s of the 5-minute burst (P3) and the 37.8 s of the 09:00 peak (P4). Past the knee throughput falls, and results saved late turn into duplicates (P10). |
+| MySQL | ✅ fine | ✅ fine, busier | At 1,000 jobs/s: up to 2,715 commits/s with ~1,100 `fsync`s/s, 854 of 2,000 millicores on average (1,207 at most), at most 2 row lock waits/s. Without the N+1 the same load needs fewer commits (P3: 1,296/s against 1,884/s). The disk is uncapped, so this is optimistic. |
+| Cassandra, reconciler, archiver, APIs | ✅ not the limit | ✅ not the limit | The reconciler recovered every result lost under overload; those jobs became duplicates, not losses. |
+| The bench (fake endpoint, Toxiproxy) | ✅ not limiting | ✅ not limiting | The fake endpoint stayed under 1,081 of its 2,000 millicores; Toxiproxy peaked at 518 millicores. |
+
+- **Capacity tripled.** This machine went from ~330 jobs/s with any number of executors to 1,019 jobs/s with 3 (p99 1.23 s), and the 09:00 peak from 94 s to 38 s.
+- **The next limit is the executors' CPU, and it scales out.** 2 executors at 400/s went from 336/s to 398/s, and 3 from 330/s to 407/s.
+- **The executor needs admission control.** Past its capacity it claims up to as many jobs as it has free workers, 10,000, far more than half a CPU can fire. Throughput then falls, and results saved after the lease expires run again. About 1,000 workers per 0.5 vCPU did better than 10,000.
+- **GOMAXPROCS is not a free win.** The bench runs Go with 12 threads on half a CPU, because Go 1.25 cannot read the limit in WSL's hybrid cgroups ([P0](bench/results/P0-calibration/README.md)). Setting it to 1, as Go would on EKS, cut throttling by 60% but one executor's throughput by 20%. The value to test next is 2.
+
 ### What could be improved
 
 Ideas from the results, not built:
 
-- **Scheduler:** advance the batch's tasks with one statement instead of one per task; larger batches; several schedulers, each owning a share of the tasks (the partitions in the [readme's to-do list](readme.md#to-do)).
+- **Scheduler:** ~~advance the batch's tasks with one statement instead of one per task~~ (done, round 2); larger batches or a shorter tick, now that a tick takes ~54 ms; several schedulers, each owning a share of the tasks (the partitions in the [readme's to-do list](readme.md#to-do)).
 - **Priority at the source:** take tasks in order of time and then priority, and create jobs of large crons (hourly, daily) further ahead, so a peak is ready before it starts.
-- **Executor:** more CPU or replicas for bursts, and results saved in batches instead of one `UPDATE` per job over 5 connections.
+- **Executor:** more CPU or replicas for bursts, and results saved in batches instead of one `UPDATE` per job over 5 connections. Claims sized to what the CPU can fire, not to free workers, and a lease that covers the wait to save the result (round 2).
 - **Idempotency:** an idempotency key on every call, so customers can drop retries of work they already did.
 - **The bench:** a run of hours; network latency with jitter; a capped disk, closer to RDS; and checking the 30 s writeback hypothesis of [P0](bench/results/P0-calibration/README.md).
 
@@ -395,6 +453,7 @@ bench/scripts/down.sh           # delete everything except bench/results
 - **Fixed latency.** 1 ms without jitter, loss or tail, unlike a real network.
 - **Disk not capped.** `fsync` on a local SSD is far faster than on an RDS volume: database-bound numbers are an upper bound.
 - **Small tables.** The hot table fits in memory; in production it would be larger and miss the cache more often.
+- **GOMAXPROCS 12.** Go 1.25 cannot read the pods' CPU limit in WSL's hybrid cgroups, so every service runs 12 threads on its share of a CPU and gets throttled in bursts. On EKS with cgroup v2 Go would pick the limit; with `GOMAXPROCS=1` one executor ran 20% fewer jobs ([P0](bench/results/P0-calibration/README.md)).
 - **One endpoint, plain HTTP.** No TLS, and connection reuse is easier than with thousands of customer hosts.
 - **A stall every ~30 s.** Now and then a whole second of jobs starts up to 1 s late, most likely the host's disk writeback; it puts a floor of ~0.8 s under the p99 of the lighter tests (see [P0](bench/results/P0-calibration/README.md)).
 - **Short runs.** Each test lasts minutes, the longest 30. Slow leaks, a full hour of history for the archiver, and the hourly and daily crons firing more than once need runs of hours.

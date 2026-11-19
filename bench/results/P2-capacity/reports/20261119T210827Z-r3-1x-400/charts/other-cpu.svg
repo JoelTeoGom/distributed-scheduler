@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Scheduler, fake endpoint and databases CPU</text>
+<text x="64" y="40" font-size="12" fill="#52514e">millicores</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">1,000</text>
+<text x="129.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="259.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="389.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="519.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<text x="649.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:00</text>
+<text x="779.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:20</text>
+<line x1="259.0" x2="259.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="263.0" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="649.0" x2="649.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="653.0" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M176.7,259.9 L189.7,259.8 L202.7,258.5 L215.7,259.0 L228.7,258.9 L241.7,258.5 L254.7,258.9 L269.1,259.1 L280.7,258.7 L293.7,258.8 L306.7,258.7 L319.7,258.9 L332.7,258.9 L345.7,259.0 L358.7,258.9 L377.7,259.0 L389.9,258.6 L402.9,258.8 L415.9,258.8 L428.9,258.9 L441.9,258.9 L454.9,258.8 L467.9,258.8 L482.3,258.8 L493.9,258.7 L506.9,258.4 L519.9,258.4 L532.9,258.3 L545.9,258.8 L558.9,258.6 L571.9,258.7 L586.3,259.2 L603.7,259.9 L616.7,259.6 L629.7,259.8 L642.7,259.7 L655.7,259.6 L668.7,259.6 L681.7,259.8 L696.0,259.9 L707.7,259.8 L720.7,259.9 L733.7,259.8 L746.7,259.8 L759.7,259.8 L772.7,259.8 L785.7,259.8 L799.9,259.8 L811.7,259.8 L824.7,259.8 L837.7,259.9 L850.7,259.8" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M176.7,260.0 L189.7,260.0 L202.7,260.0 L215.7,260.0 L228.7,260.0 L241.7,260.0 L254.7,260.0 L269.1,238.3 L280.7,235.8 L293.7,236.5 L306.7,235.2 L319.7,239.7 L332.7,237.8 L345.7,238.7 L358.7,239.3 L377.7,238.2 L389.9,235.1 L402.9,237.0 L415.9,239.0 L428.9,238.0 L441.9,234.9 L454.9,233.0 L467.9,238.0 L482.3,239.0 L493.9,245.1 L506.9,245.6 L519.9,242.1 L532.9,246.8 L545.9,233.0 L558.9,255.7 L571.9,254.6 L586.3,252.2 L603.7,243.0 L616.7,237.0 L629.7,252.2 L642.7,255.3 L655.7,253.6 L668.7,247.4 L681.7,247.3 L696.0,229.9 L707.7,247.5 L720.7,260.0 L733.7,260.0 L746.7,260.0 L759.7,188.0 L772.7,241.3 L785.7,250.7 L799.9,256.8 L811.7,250.5 L824.7,259.4 L837.7,254.9 L850.7,260.0" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<path d="M176.7,220.8 L189.7,255.8 L202.7,248.8 L215.7,247.5 L228.7,250.9 L241.7,247.2 L254.7,247.6 L269.1,204.9 L280.7,181.8 L293.7,183.6 L306.7,185.4 L319.7,186.5 L332.7,191.8 L345.7,195.4 L358.7,186.8 L377.7,192.3 L389.9,205.2 L402.9,178.1 L415.9,188.7 L428.9,188.5 L441.9,194.3 L454.9,191.6 L467.9,186.1 L482.3,187.5 L493.9,205.5 L506.9,242.9 L519.9,220.7 L532.9,248.3 L545.9,210.0 L558.9,210.0 L571.9,250.7 L586.3,251.1 L603.7,254.0 L616.7,255.5 L629.7,169.6 L642.7,252.5 L655.7,254.8 L668.7,204.6 L681.7,252.4 L696.0,250.7 L707.7,168.9 L720.7,166.0 L733.7,169.1 L746.7,170.1 L759.7,196.2 L772.7,180.9 L785.7,168.6 L799.9,166.5 L811.7,170.1 L824.7,158.4 L837.7,233.8 L850.7,255.9" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<path d="M176.7,259.8 L189.7,259.5 L202.7,258.6 L215.7,259.1 L228.7,258.5 L241.7,258.9 L254.7,258.7 L269.1,230.1 L280.7,218.8 L293.7,219.1 L306.7,220.6 L319.7,221.6 L332.7,223.9 L345.7,224.4 L358.7,222.0 L377.7,224.2 L389.9,230.8 L402.9,216.3 L415.9,219.9 L428.9,222.8 L441.9,225.7 L454.9,223.0 L467.9,221.2 L482.3,220.6 L493.9,232.1 L506.9,257.6 L519.9,245.9 L532.9,258.6 L545.9,233.1 L558.9,239.7 L571.9,259.1 L586.3,259.4 L603.7,259.2 L616.7,259.4 L629.7,222.2 L642.7,259.6 L655.7,259.7 L668.7,259.3 L681.7,259.6 L696.0,259.3 L707.7,204.5 L720.7,203.0 L733.7,202.8 L746.7,203.5 L759.7,239.6 L772.7,211.3 L785.7,203.6 L799.9,203.6 L811.7,201.7 L824.7,198.9 L837.7,248.2 L850.7,259.5" fill="none" stroke="#eda100" stroke-width="2" stroke-linejoin="round"/>
+<text x="850.6" y="40" font-size="12" fill="#0b0b0b">toxiproxy</text>
+<line x1="828.6" x2="844.6" y1="36" y2="36" stroke="#eda100" stroke-width="3" stroke-linecap="round"/>
+<text x="783.6" y="40" font-size="12" fill="#0b0b0b">mysql</text>
+<line x1="761.6" x2="777.6" y1="36" y2="36" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<text x="663.8" y="40" font-size="12" fill="#0b0b0b">fake endpoint</text>
+<line x1="641.8" x2="657.8" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="570.4" y="40" font-size="12" fill="#0b0b0b">scheduler</text>
+<line x1="548.4" x2="564.4" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

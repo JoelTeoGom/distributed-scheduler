@@ -28,6 +28,13 @@ Nothing else runs: no crons, no slow endpoints. It measures the throughput of th
 | [1x-400](reports/20261110T193042Z-1x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 300.9 | 3.36 / 21.85 / 26.65 / 27.95 s |
 | [2x-400](reports/20261110T193326Z-2x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 336.5 | 3.52 / 11.73 / 13.92 / 14.22 s |
 | [3x-400](reports/20261110T193552Z-3x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 330.3 | 4.28 / 12.47 / 14.67 / 16.07 s |
+| [r2-1x-50](reports/20261119T202410Z-r2-1x-50/report.md) | 3,000 | 3,000 | 0 | 0 | 0 | 50.8 | 0.00 / 0.01 / 0.62 / 0.62 s |
+| [r2-1x-100](reports/20261119T202620Z-r2-1x-100/report.md) | 6,000 | 6,000 | 0 | 0 | 0 | 101.7 | 0.00 / 0.01 / 0.64 / 0.65 s |
+| [r2-1x-200](reports/20261119T202828Z-r2-1x-200/report.md) | 12,000 | 12,000 | 0 | 0 | 0 | 203.3 | 0.01 / 0.10 / 0.53 / 0.53 s |
+| [r2-1x-400](reports/20261119T203217Z-r2-1x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 327.3 | 3.46 / 13.85 / 19.34 / 20.55 s |
+| [r2-2x-400](reports/20261119T203410Z-r2-2x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 397.5 | 0.01 / 0.39 / 1.09 / 1.95 s |
+| [r2-3x-400](reports/20261119T203538Z-r2-3x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 406.7 | 0.01 / 0.12 / 0.62 / 0.84 s |
+| [r3-1x-400](reports/20261119T210827Z-r3-1x-400/report.md) | 24,000 | 24,000 | 0 | 0 | 0 | 260.5 | 0.06 / 11.75 / 20.25 / 21.35 s |
 
 ![Capacity](capacity.svg)
 
@@ -676,6 +683,740 @@ MySQL: up to 1775 commits/s, 1105 redo fsyncs/s, 0 row lock waits/s, 20 connecti
 
 Run page: [reports/20261110T193552Z-3x-400/report.md](reports/20261110T193552Z-3x-400/report.md)
 
+### r2-1x-50
+
+- **Load:** 60 s of 50 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 3,000 tasks seeded.
+- **Deployment:** 1 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T202410Z-r2-1x-50/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 3,000 | 3,000 | 0 | 0 | 0 | 0 | 0 | 50.8 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 750 | 0.003 s | 0.006 s | 0.618 s | 0.619 s |
+| 1 | 750 | 0.002 s | 0.006 s | 0.618 s | 0.619 s |
+| 2 | 750 | 0.002 s | 0.006 s | 0.618 s | 0.619 s |
+| 3 | 750 | 0.002 s | 0.006 s | 0.618 s | 0.619 s |
+| all | 3,000 | 0.002 s | 0.006 s | 0.618 s | 0.619 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T202410Z-r2-1x-50/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T202410Z-r2-1x-50/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T202410Z-r2-1x-50/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T202410Z-r2-1x-50/charts/queue.svg)
+
+![Executor CPU](reports/20261119T202410Z-r2-1x-50/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T202410Z-r2-1x-50/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T202410Z-r2-1x-50/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T202410Z-r2-1x-50/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T202410Z-r2-1x-50/charts/mysql.svg)
+
+![Disk writes](reports/20261119T202410Z-r2-1x-50/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service 7c5jv | 22 | 86 | 350 | 63 |
+| scheduler-service 7jsfb | 2 | 4 | 0 | 10 |
+| fake-endpoint cf55t | 9 | 32 | 0 | 13 |
+| mysql | 48 | 87 | 0 | 840 |
+| cassandra | 102 | 289 | 0 | 1072 |
+| toxiproxy | 16 | 38 | 0 | 14 |
+
+MySQL: up to 145 commits/s, 118 redo fsyncs/s, 0 row lock waits/s, 11 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:34</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     140ms 27.45% 27.45%      140ms 27.45%  internal/runtime/syscall.Syscall6
+      80ms 15.69% 43.14%       80ms 15.69%  runtime.futex
+      50ms  9.80% 52.94%       50ms  9.80%  runtime.findObject
+      40ms  7.84% 60.78%       40ms  7.84%  runtime.(*lfstack).pop
+      30ms  5.88% 66.67%      100ms 19.61%  runtime.scanobject
+      20ms  3.92% 70.59%       30ms  5.88%  runtime.greyobject
+      10ms  1.96% 72.55%       10ms  1.96%  github.com/go-sql-driver/mysql.callValuerValue
+      10ms  1.96% 74.51%       10ms  1.96%  internal/runtime/atomic.(*Uint32).CompareAndSwap
+      10ms  1.96% 76.47%       10ms  1.96%  runtime.(*lfstack).push
+      10ms  1.96% 78.43%       10ms  1.96%  runtime.(*stkframe).getStackMap
+      10ms  1.96% 80.39%       10ms  1.96%  runtime.binarySearchTree
+      10ms  1.96% 82.35%       10ms  1.96%  runtime.checkTimersNoP
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:34</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+```
+
+</details>
+
+Run page: [reports/20261119T202410Z-r2-1x-50/report.md](reports/20261119T202410Z-r2-1x-50/report.md)
+
+### r2-1x-100
+
+- **Load:** 60 s of 100 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 6,000 tasks seeded.
+- **Deployment:** 1 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T202620Z-r2-1x-100/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 6,000 | 6,000 | 0 | 0 | 0 | 0 | 0 | 101.7 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 1,500 | 0.003 s | 0.009 s | 0.643 s | 0.646 s |
+| 1 | 1,500 | 0.004 s | 0.009 s | 0.643 s | 0.646 s |
+| 2 | 1,500 | 0.004 s | 0.010 s | 0.643 s | 0.646 s |
+| 3 | 1,500 | 0.004 s | 0.011 s | 0.643 s | 0.646 s |
+| all | 6,000 | 0.004 s | 0.010 s | 0.643 s | 0.646 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T202620Z-r2-1x-100/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T202620Z-r2-1x-100/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T202620Z-r2-1x-100/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T202620Z-r2-1x-100/charts/queue.svg)
+
+![Executor CPU](reports/20261119T202620Z-r2-1x-100/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T202620Z-r2-1x-100/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T202620Z-r2-1x-100/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T202620Z-r2-1x-100/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T202620Z-r2-1x-100/charts/mysql.svg)
+
+![Disk writes](reports/20261119T202620Z-r2-1x-100/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service 7c5jv | 42 | 176 | 1110 | 86 |
+| scheduler-service 7jsfb | 2 | 5 | 0 | 11 |
+| fake-endpoint cf55t | 16 | 69 | 0 | 20 |
+| mysql | 71 | 140 | 0 | 855 |
+| cassandra | 101 | 296 | 0 | 1060 |
+| toxiproxy | 28 | 67 | 0 | 16 |
+
+MySQL: up to 292 commits/s, 230 redo fsyncs/s, 0 row lock waits/s, 11 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:34</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     140ms 24.56% 24.56%      140ms 24.56%  internal/runtime/syscall.Syscall6
+      80ms 14.04% 38.60%       80ms 14.04%  runtime.futex
+      30ms  5.26% 43.86%       40ms  7.02%  runtime.stealWork
+      20ms  3.51% 47.37%       20ms  3.51%  runtime.(*lfstack).pop
+      20ms  3.51% 50.88%      200ms 35.09%  runtime.findRunnable
+      20ms  3.51% 54.39%       20ms  3.51%  runtime.nanotime (inline)
+      10ms  1.75% 56.14%       10ms  1.75%  database/sql.driverArgsConnLocked
+      10ms  1.75% 57.89%       40ms  7.02%  database/sql.resultFromStatement
+      10ms  1.75% 59.65%       10ms  1.75%  internal/bytealg.IndexByte
+      10ms  1.75% 61.40%       10ms  1.75%  internal/runtime/maps.(*Iter).Next
+      10ms  1.75% 63.16%       10ms  1.75%  internal/runtime/maps.rand
+      10ms  1.75% 64.91%       50ms  8.77%  internal/runtime/syscall.EpollWait
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:34</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+      10ms   100%   100%       10ms   100%  runtime.futex
+         0     0%   100%       10ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/service.(*SchedulerService).Start
+         0     0%   100%       10ms   100%  main.main.func2
+         0     0%   100%       10ms   100%  runtime.(*timer).maybeAdd
+         0     0%   100%       10ms   100%  runtime.blockTimerChan
+         0     0%   100%       10ms   100%  runtime.futexwakeup
+         0     0%   100%       10ms   100%  runtime.notewakeup
+         0     0%   100%       10ms   100%  runtime.selectgo
+         0     0%   100%       10ms   100%  runtime.startm
+         0     0%   100%       10ms   100%  runtime.wakeNetPoller
+         0     0%   100%       10ms   100%  runtime.wakep
+```
+
+</details>
+
+Run page: [reports/20261119T202620Z-r2-1x-100/report.md](reports/20261119T202620Z-r2-1x-100/report.md)
+
+### r2-1x-200
+
+- **Load:** 60 s of 200 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 12,000 tasks seeded.
+- **Deployment:** 1 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T202828Z-r2-1x-200/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 12,000 | 12,000 | 0 | 0 | 0 | 0 | 0 | 203.3 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 3,000 | 0.006 s | 0.104 s | 0.529 s | 0.530 s |
+| 1 | 3,000 | 0.006 s | 0.105 s | 0.530 s | 0.530 s |
+| 2 | 3,000 | 0.007 s | 0.106 s | 0.529 s | 0.531 s |
+| 3 | 3,000 | 0.007 s | 0.105 s | 0.529 s | 0.531 s |
+| all | 12,000 | 0.007 s | 0.105 s | 0.529 s | 0.531 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T202828Z-r2-1x-200/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T202828Z-r2-1x-200/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T202828Z-r2-1x-200/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T202828Z-r2-1x-200/charts/queue.svg)
+
+![Executor CPU](reports/20261119T202828Z-r2-1x-200/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T202828Z-r2-1x-200/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T202828Z-r2-1x-200/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T202828Z-r2-1x-200/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T202828Z-r2-1x-200/charts/mysql.svg)
+
+![Disk writes](reports/20261119T202828Z-r2-1x-200/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service 7c5jv | 74 | 242 | 2558 | 113 |
+| scheduler-service 7jsfb | 2 | 9 | 0 | 12 |
+| fake-endpoint cf55t | 30 | 122 | 0 | 30 |
+| mysql | 110 | 240 | 0 | 895 |
+| cassandra | 103 | 376 | 0 | 1064 |
+| toxiproxy | 49 | 122 | 0 | 16 |
+
+MySQL: up to 520 commits/s, 379 redo fsyncs/s, 0 row lock waits/s, 11 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     510ms 35.66% 35.66%      510ms 35.66%  internal/runtime/syscall.Syscall6
+     200ms 13.99% 49.65%      200ms 13.99%  runtime.futex
+      50ms  3.50% 53.15%       50ms  3.50%  runtime.(*lfstack).pop (inline)
+      40ms  2.80% 55.94%       40ms  2.80%  runtime.(*unwinder).resolveInternal
+      30ms  2.10% 58.04%       60ms  4.20%  runtime.(*stkframe).getStackMap
+      30ms  2.10% 60.14%       80ms  5.59%  runtime.selectgo
+      20ms  1.40% 61.54%       20ms  1.40%  runtime.findfunc
+      20ms  1.40% 62.94%       20ms  1.40%  runtime.memmove
+      20ms  1.40% 64.34%       60ms  4.20%  runtime.newobject
+      20ms  1.40% 65.73%       20ms  1.40%  runtime.nextFreeFast
+      20ms  1.40% 67.13%       20ms  1.40%  runtime.step
+      20ms  1.40% 68.53%       20ms  1.40%  runtime.unlock2
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+      10ms 50.00% 50.00%       10ms 50.00%  internal/runtime/syscall.Syscall6
+      10ms 50.00%   100%       10ms 50.00%  runtime.selectgo
+         0     0%   100%       20ms   100%  database/sql.(*DB).execDC
+         0     0%   100%       10ms 50.00%  database/sql.(*DB).execDC.func3
+         0     0%   100%       20ms   100%  database/sql.(*Tx).ExecContext
+         0     0%   100%       10ms 50.00%  database/sql.(*driverStmt).Close
+         0     0%   100%       10ms 50.00%  database/sql.ctxDriverPrepare
+         0     0%   100%       10ms 50.00%  database/sql.withLock
+         0     0%   100%       20ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.(*SchedulerRepository).ScheduleJobs
+         0     0%   100%       10ms 50.00%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.insertJobs
+         0     0%   100%       10ms 50.00%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.updateNextRuns
+         0     0%   100%       20ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/service.(*SchedulerService).Start
+```
+
+</details>
+
+Run page: [reports/20261119T202828Z-r2-1x-200/report.md](reports/20261119T202828Z-r2-1x-200/report.md)
+
+### r2-1x-400
+
+- **Load:** 60 s of 400 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 24,000 tasks seeded.
+- **Deployment:** 1 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T203217Z-r2-1x-400/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 24,000 | 24,000 | 0 | 0 | 96 | 0 | 0 | 327.3 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 5,951 | 3.155 s | 12.647 s | 17.147 s | 19.541 s |
+| 1 | 5,973 | 3.350 s | 13.540 s | 18.748 s | 20.345 s |
+| 2 | 5,984 | 3.599 s | 14.648 s | 18.449 s | 19.646 s |
+| 3 | 5,996 | 3.649 s | 15.345 s | 20.241 s | 20.545 s |
+| all | 23,904 | 3.458 s | 13.846 s | 19.345 s | 20.545 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T203217Z-r2-1x-400/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T203217Z-r2-1x-400/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T203217Z-r2-1x-400/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T203217Z-r2-1x-400/charts/queue.svg)
+
+![Executor CPU](reports/20261119T203217Z-r2-1x-400/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T203217Z-r2-1x-400/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T203217Z-r2-1x-400/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T203217Z-r2-1x-400/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T203217Z-r2-1x-400/charts/mysql.svg)
+
+![Disk writes](reports/20261119T203217Z-r2-1x-400/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service 7c5jv | 275 | 532 | 11038 | 258 |
+| scheduler-service 7jsfb | 5 | 18 | 0 | 13 |
+| fake-endpoint cf55t | 67 | 307 | 0 | 118 |
+| mysql | 224 | 537 | 0 | 983 |
+| cassandra | 99 | 315 | 0 | 1084 |
+| toxiproxy | 111 | 298 | 0 | 17 |
+
+MySQL: up to 1326 commits/s, 1213 redo fsyncs/s, 1 row lock waits/s, 9 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     2.62s 67.01% 67.01%      2.62s 67.01%  internal/runtime/syscall.Syscall6
+     0.25s  6.39% 73.40%      0.25s  6.39%  runtime.futex
+     0.08s  2.05% 75.45%      0.08s  2.05%  runtime.findObject
+     0.06s  1.53% 76.98%      0.06s  1.53%  internal/runtime/atomic.(*Uint32).CompareAndSwap
+     0.04s  1.02% 78.01%      0.04s  1.02%  runtime.nextFreeFast (inline)
+     0.03s  0.77% 78.77%      0.05s  1.28%  net/http.Header.writeSubset
+     0.03s  0.77% 79.54%      0.07s  1.79%  runtime.(*unwinder).resolveInternal
+     0.03s  0.77% 80.31%      0.03s  0.77%  runtime.asyncPreempt
+     0.03s  0.77% 81.07%      0.23s  5.88%  runtime.mallocgc
+     0.03s  0.77% 81.84%      0.06s  1.53%  runtime.pcvalue
+     0.03s  0.77% 82.61%      0.10s  2.56%  runtime.selectgo
+     0.02s  0.51% 83.12%      0.02s  0.51%  math/rand/v2.(*Rand).uint64n
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+      10ms 11.11% 11.11%       10ms 11.11%  database/sql.(*Rows).close
+      10ms 11.11% 22.22%       10ms 11.11%  gcWriteBarrier
+      10ms 11.11% 33.33%       10ms 11.11%  runtime.(*mspan).base (inline)
+      10ms 11.11% 44.44%       10ms 11.11%  runtime.futex
+      10ms 11.11% 55.56%       10ms 11.11%  runtime.gopark
+      10ms 11.11% 66.67%       10ms 11.11%  runtime.nextFreeFast
+      10ms 11.11% 77.78%       20ms 22.22%  runtime.scanobject
+      10ms 11.11% 88.89%       10ms 11.11%  runtime.stealWork
+      10ms 11.11%   100%       10ms 11.11%  runtime.typePointers.next
+         0     0%   100%       20ms 22.22%  database/sql.(*DB).execDC
+         0     0%   100%       20ms 22.22%  database/sql.(*DB).execDC.func2
+         0     0%   100%       10ms 11.11%  database/sql.(*Rows).Close
+```
+
+</details>
+
+Run page: [reports/20261119T203217Z-r2-1x-400/report.md](reports/20261119T203217Z-r2-1x-400/report.md)
+
+### r2-2x-400
+
+- **Load:** 60 s of 400 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 24,000 tasks seeded.
+- **Deployment:** 2 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T203410Z-r2-2x-400/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 24,000 | 24,000 | 0 | 0 | 0 | 0 | 0 | 397.5 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 6,000 | 0.012 s | 0.391 s | 0.994 s | 1.944 s |
+| 1 | 6,000 | 0.012 s | 0.390 s | 1.090 s | 1.945 s |
+| 2 | 6,000 | 0.011 s | 0.390 s | 0.885 s | 1.942 s |
+| 3 | 6,000 | 0.011 s | 0.392 s | 0.993 s | 1.945 s |
+| all | 24,000 | 0.011 s | 0.391 s | 1.089 s | 1.945 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T203410Z-r2-2x-400/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T203410Z-r2-2x-400/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T203410Z-r2-2x-400/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T203410Z-r2-2x-400/charts/queue.svg)
+
+![Executor CPU](reports/20261119T203410Z-r2-2x-400/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T203410Z-r2-2x-400/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T203410Z-r2-2x-400/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T203410Z-r2-2x-400/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T203410Z-r2-2x-400/charts/mysql.svg)
+
+![Disk writes](reports/20261119T203410Z-r2-2x-400/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service 7c5jv | 179 | 478 | 11454 | 280 |
+| executor-service d2zf2 | 74 | 320 | 2649 | 98 |
+| scheduler-service 7jsfb | 5 | 21 | 0 | 12 |
+| fake-endpoint cf55t | 75 | 163 | 0 | 120 |
+| mysql | 293 | 478 | 0 | 1055 |
+| cassandra | 100 | 292 | 0 | 1063 |
+| toxiproxy | 145 | 283 | 0 | 18 |
+
+MySQL: up to 1194 commits/s, 950 redo fsyncs/s, 0 row lock waits/s, 14 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     1.66s 60.14% 60.14%      1.66s 60.14%  internal/runtime/syscall.Syscall6
+     0.25s  9.06% 69.20%      0.25s  9.06%  runtime.futex
+     0.04s  1.45% 70.65%      0.09s  3.26%  runtime.pcvalue
+     0.03s  1.09% 71.74%      0.04s  1.45%  runtime.findObject
+     0.03s  1.09% 72.83%      0.06s  2.17%  runtime.scanobject
+     0.03s  1.09% 73.91%      0.11s  3.99%  runtime.selectgo
+     0.03s  1.09% 75.00%      0.04s  1.45%  runtime.step
+     0.02s  0.72% 75.72%      0.02s  0.72%  net.(*TCPConn).Write
+     0.02s  0.72% 76.45%      0.02s  0.72%  runtime.(*lfstack).pop
+     0.02s  0.72% 77.17%      0.02s  0.72%  runtime.(*mspan).writeHeapBitsSmall
+     0.02s  0.72% 77.90%      0.02s  0.72%  runtime.interhash
+     0.02s  0.72% 78.62%      0.04s  1.45%  runtime.lock2
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+      20ms   100%   100%       20ms   100%  internal/runtime/syscall.Syscall6
+         0     0%   100%       10ms 50.00%  crypto/internal/sysrand.Read
+         0     0%   100%       10ms 50.00%  crypto/internal/sysrand.read
+         0     0%   100%       10ms 50.00%  crypto/rand.(*reader).Read
+         0     0%   100%       10ms 50.00%  database/sql.(*DB).execDC
+         0     0%   100%       10ms 50.00%  database/sql.(*DB).execDC.func3
+         0     0%   100%       10ms 50.00%  database/sql.(*Tx).ExecContext
+         0     0%   100%       10ms 50.00%  database/sql.ctxDriverPrepare
+         0     0%   100%       10ms 50.00%  database/sql.withLock
+         0     0%   100%       20ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.(*SchedulerRepository).ScheduleJobs
+         0     0%   100%       20ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.insertJobs
+         0     0%   100%       20ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/service.(*SchedulerService).Start
+```
+
+</details>
+
+Run page: [reports/20261119T203410Z-r2-2x-400/report.md](reports/20261119T203410Z-r2-2x-400/report.md)
+
+### r2-3x-400
+
+- **Load:** 60 s of 400 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 24,000 tasks seeded.
+- **Deployment:** 3 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T203538Z-r2-3x-400/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 24,000 | 24,000 | 0 | 0 | 0 | 0 | 0 | 406.7 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 6,000 | 0.008 s | 0.115 s | 0.524 s | 0.831 s |
+| 1 | 6,000 | 0.008 s | 0.120 s | 0.823 s | 0.831 s |
+| 2 | 6,000 | 0.009 s | 0.121 s | 0.707 s | 0.835 s |
+| 3 | 6,000 | 0.009 s | 0.120 s | 0.624 s | 0.837 s |
+| all | 24,000 | 0.009 s | 0.120 s | 0.625 s | 0.837 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T203538Z-r2-3x-400/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T203538Z-r2-3x-400/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T203538Z-r2-3x-400/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T203538Z-r2-3x-400/charts/queue.svg)
+
+![Executor CPU](reports/20261119T203538Z-r2-3x-400/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T203538Z-r2-3x-400/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T203538Z-r2-3x-400/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T203538Z-r2-3x-400/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T203538Z-r2-3x-400/charts/mysql.svg)
+
+![Disk writes](reports/20261119T203538Z-r2-3x-400/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service 7c5jv | 111 | 279 | 2299 | 230 |
+| executor-service d2zf2 | 30 | 262 | 2593 | 100 |
+| executor-service wvfff | 65 | 317 | 2610 | 94 |
+| scheduler-service 7jsfb | 5 | 8 | 0 | 13 |
+| fake-endpoint cf55t | 77 | 162 | 0 | 116 |
+| mysql | 301 | 493 | 0 | 1080 |
+| cassandra | 104 | 305 | 0 | 1068 |
+| toxiproxy | 150 | 261 | 0 | 22 |
+
+MySQL: up to 1031 commits/s, 828 redo fsyncs/s, 1 row lock waits/s, 20 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:34</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     360ms 22.36% 22.36%      360ms 22.36%  internal/runtime/syscall.Syscall6
+     310ms 19.25% 41.61%      310ms 19.25%  runtime.futex
+     100ms  6.21% 47.83%      100ms  6.21%  runtime.(*lfstack).pop (inline)
+      40ms  2.48% 50.31%      330ms 20.50%  runtime.markroot
+      30ms  1.86% 52.17%       50ms  3.11%  runtime.pcvalue
+      20ms  1.24% 53.42%       20ms  1.24%  internal/runtime/atomic.(*Uint32).CompareAndSwap
+      20ms  1.24% 54.66%       20ms  1.24%  runtime.(*gcBits).bitp (inline)
+      20ms  1.24% 55.90%       30ms  1.86%  runtime.(*mcache).prepareForSweep
+      20ms  1.24% 57.14%       50ms  3.11%  runtime.(*unwinder).resolveInternal
+      20ms  1.24% 58.39%       20ms  1.24%  runtime.acquireSudog
+      20ms  1.24% 59.63%       20ms  1.24%  runtime.binarySearchTree
+      20ms  1.24% 60.87%       20ms  1.24%  runtime.memclrNoHeapPointers
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:34</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+      10ms   100%   100%       10ms   100%  runtime.memmove
+         0     0%   100%       10ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.(*SchedulerRepository).ScheduleJobs
+         0     0%   100%       10ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/adapters/out/mysql.insertJobs
+         0     0%   100%       10ms   100%  github.com/JoelTeoGom/distributed-scheduler/scheduler-service/internal/service.(*SchedulerService).Start
+         0     0%   100%       10ms   100%  main.main.func2
+         0     0%   100%       10ms   100%  runtime.convT
+         0     0%   100%       10ms   100%  runtime.typedmemmove
+```
+
+</details>
+
+Run page: [reports/20261119T203538Z-r2-3x-400/report.md](reports/20261119T203538Z-r2-3x-400/report.md)
+
+### r3-1x-400
+
+- **Load:** 60 s of 400 one-off jobs per second, endpoint `lat=50&dist=lognormal`, timeout 30 s; 24,000 tasks seeded.
+- **Deployment:** 1 executors; executor-service: `JOB_TIME_LIMIT_SECONDS=1 WORKER_COUNT=10000 JOB_QUEUE_SIZE=10000 PPROF_ADDR=:6060 GOMAXPROCS=1`; scheduler-service: `SCHEDULE_INTERVAL=1s SCHEDULE_LOOKAHEAD=10s PPROF_ADDR=:6060`
+- **Raw data:** `bench/results/P2-capacity/runs/20261119T210827Z-r3-1x-400/` (local, not committed)
+
+#### Jobs
+
+| Created | Succeeded | Dead | Still pending or running | Retried | Duplicate successes | Timed out, done anyway | Calls per second (first attempts) |
+|---|---|---|---|---|---|---|---|
+| 24,000 | 24,000 | 0 | 0 | 3,928 | 0 | 0 | 260.5 |
+
+*Duplicate successes*: the endpoint answered 200 twice for one job, which only a failure should cause. *Timed out, done anyway*: the executor gave up after the timeout while the endpoint finished the work, so the retry made the customer process the job again.
+
+**Start delay** (when the call reached the endpoint minus when the job was due, first attempts):
+
+| Priority | Jobs | p50 | p90 | p99 | max |
+|---|---|---|---|---|---|
+| 0 | 4,586 | 0.055 s | 9.619 s | 18.941 s | 21.353 s |
+| 1 | 5,689 | 0.062 s | 17.159 s | 20.340 s | 21.148 s |
+| 2 | 5,024 | 0.058 s | 11.420 s | 21.245 s | 21.248 s |
+| 3 | 4,773 | 0.057 s | 10.316 s | 18.878 s | 19.212 s |
+| all | 20,072 | 0.058 s | 11.750 s | 20.252 s | 21.353 s |
+
+<details><summary>Charts</summary>
+
+Time is minutes:seconds from the start of the load.
+
+![Calls reaching the customers' endpoints](reports/20261119T210827Z-r3-1x-400/charts/calls.svg)
+
+![Start delay p99, by priority](reports/20261119T210827Z-r3-1x-400/charts/start-delay-p99.svg)
+
+![Start delay p50, by priority](reports/20261119T210827Z-r3-1x-400/charts/start-delay-p50.svg)
+
+![Jobs in the queue](reports/20261119T210827Z-r3-1x-400/charts/queue.svg)
+
+![Executor CPU](reports/20261119T210827Z-r3-1x-400/charts/executor-cpu.svg)
+
+![Executor CPU throttling](reports/20261119T210827Z-r3-1x-400/charts/executor-throttled.svg)
+
+![Memory](reports/20261119T210827Z-r3-1x-400/charts/memory.svg)
+
+![Scheduler, fake endpoint and databases CPU](reports/20261119T210827Z-r3-1x-400/charts/other-cpu.svg)
+
+![MySQL writes](reports/20261119T210827Z-r3-1x-400/charts/mysql.svg)
+
+![Disk writes](reports/20261119T210827Z-r3-1x-400/charts/disk.svg)
+
+</details>
+
+#### Resources
+
+| Component | CPU avg (millicores) | CPU max | Throttled max (ms/s) | Memory max (MiB) |
+|---|---|---|---|---|
+| executor-service c64fn | 202 | 514 | 7308 | 266 |
+| scheduler-service f4v45 | 4 | 8 | 0 | 13 |
+| fake-endpoint cf55t | 69 | 349 | 0 | 329 |
+| mysql | 246 | 493 | 0 | 1493 |
+| cassandra | 94 | 266 | 0 | 1068 |
+| toxiproxy | 123 | 297 | 0 | 21 |
+
+MySQL: up to 1296 commits/s, 1188 redo fsyncs/s, 2 row lock waits/s, 9 connections.
+
+#### CPU profiles
+
+<details><summary>CPU profile: executor, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+     4.42s 90.39% 90.39%      4.42s 90.39%  internal/runtime/syscall.Syscall6
+     0.04s  0.82% 91.21%      0.08s  1.64%  runtime.(*unwinder).resolveInternal
+     0.03s  0.61% 91.82%      0.05s  1.02%  runtime.pcvalue
+     0.02s  0.41% 92.23%      0.03s  0.61%  internal/runtime/maps.(*Map).getWithoutKeySmallFastStr
+     0.01s   0.2% 92.43%      0.04s  0.82%  net.(*Resolver).internetAddrList
+     0.01s   0.2% 92.64%      4.17s 85.28%  net.(*netFD).connect
+     0.01s   0.2% 92.84%      0.08s  1.64%  runtime.mallocgc
+     0.01s   0.2% 93.05%      0.04s  0.82%  runtime.mapaccess1_faststr
+     0.01s   0.2% 93.25%      0.03s  0.61%  runtime.newobject
+     0.01s   0.2% 93.46%      0.04s  0.82%  runtime.schedule
+     0.01s   0.2% 93.66%      0.03s  0.61%  runtime.selectgo
+     0.01s   0.2% 93.87%      4.45s 91.00%  syscall.Syscall
+```
+
+</details>
+
+<details><summary>CPU profile: scheduler, 20 s from 0:33</summary>
+
+```text
+      flat  flat%   sum%        cum   cum%
+      10ms 16.67% 16.67%       10ms 16.67%  github.com/go-sql-driver/mysql.(*mysqlConn).readPacket
+      10ms 16.67% 33.33%       10ms 16.67%  github.com/go-sql-driver/mysql.converter.ConvertValue
+      10ms 16.67% 50.00%       10ms 16.67%  internal/runtime/atomic.(*Uint32).Add
+      10ms 16.67% 66.67%       10ms 16.67%  runtime.(*guintptr).cas
+      10ms 16.67% 83.33%       10ms 16.67%  runtime.(*mspan).base
+      10ms 16.67%   100%       10ms 16.67%  runtime.futex
+         0     0%   100%       20ms 33.33%  database/sql.(*DB).execDC
+         0     0%   100%       10ms 16.67%  database/sql.(*DB).execDC.func2
+         0     0%   100%       10ms 16.67%  database/sql.(*DB).execDC.func3
+         0     0%   100%       20ms 33.33%  database/sql.(*Tx).ExecContext
+         0     0%   100%       10ms 16.67%  database/sql.ctxDriverPrepare
+         0     0%   100%       10ms 16.67%  database/sql.driverArgsConnLocked
+```
+
+</details>
+
+Run page: [reports/20261119T210827Z-r3-1x-400/report.md](reports/20261119T210827Z-r3-1x-400/report.md)
+
 ## Conclusions
 
 **About 300 jobs per second, and adding executors does not help, because the limit is the scheduler.** **Fixed:** that limit was an N+1 ([below](#fixed-an-n1-in-the-scheduler)).
@@ -700,3 +1441,18 @@ Re-measured with the scheduler alone and the same load as the probe: 10,000 one-
 | Direct | 380 ms | 40 ms | 2,634 → 24,760 |
 
 Both versions created all 10,000 jobs, 1,000 per tick. With latency the tick is about 100 times faster, because it no longer pays one round trip per task. The conclusions above still hold for that run: the scheduler was the ceiling and more executors could not move it. It should no longer be the ceiling; running P2 again will show the next one, most likely the executors' 0.5 vCPU, which already throttled one executor at 400/s.
+
+### Round 2: measured in the bench
+
+_2026-11-19._ The same ladder with the fix and nothing else changed: same resources, the scheduler still ticking every second, GOMAXPROCS still 12. These are the `r2-` runs above.
+
+| | Round 1 | Round 2 |
+|---|---|---|
+| 50 to 200 jobs/s, p99 | 0.80 s | 0.53 to 0.64 s |
+| 1 executor at 400/s | 301/s, p99 26.7 s | 327/s, p99 19.3 s |
+| 2 executors at 400/s | 336/s, p99 13.9 s | 398/s, p99 1.09 s |
+| 3 executors at 400/s | 330/s, p99 14.7 s | 407/s, p99 0.62 s |
+
+- **The scheduler is no longer the limit, and executors scale out again.** Two executors now take the whole 400/s, and three do it with a p99 of 0.62 s. The scheduler peaked at ~30 millicores, against ~120 in round 1: it no longer waits on a thousand round trips.
+- **The new limit is one executor's 0.5 vCPU, at about 330 jobs/s.** At 400/s it ran at its quota (352 millicores on average during the load, peaks of 525) and was throttled up to 11 s per second, summed over its threads. [P10](../P10-ceiling/README.md) measures how far 2 and 3 go.
+- **`GOMAXPROCS=1` made it worse, not better.** The `r3-1x-400` run is the same step with `GOMAXPROCS=1` on the executor, the value Go 1.25 picks for 0.5 vCPU when it can read the limit (in this bench it cannot, see [P0](../P0-calibration/README.md)). Throttling fell from 5.2 to 2.0 s per second on average, but the executor used 250 millicores instead of 352 with jobs waiting, and ran 260 jobs/s instead of 327. It is one run, at overload, but it suggests one P is too few for an executor that keeps thousands of timers and calls open. GOMAXPROCS=2 is the value to test next.

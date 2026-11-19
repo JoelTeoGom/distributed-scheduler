@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Executor CPU throttling</text>
+<text x="64" y="40" font-size="12" fill="#52514e">ms per second the kernel held the pod back at its limit, summed over the CPUs it ran on (so it can pass 1,000)</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">1,250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">2,500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">3,750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">5,000</text>
+<text x="64.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:30</text>
+<text x="179.6" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="295.1" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:10</text>
+<text x="410.7" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="526.2" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:10</text>
+<text x="641.8" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="757.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:30</text>
+<text x="872.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<line x1="410.7" x2="410.7" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="414.7" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="757.3" x2="757.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="761.3" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M262.9,260.0 L286.1,260.0 L309.2,260.0 L332.3,260.0 L355.4,260.0 L378.5,260.0 L401.6,260.0 L430.4,260.0 L447.8,260.0 L471.0,193.2 L494.1,236.3 L517.2,213.6 L540.3,217.9 L563.4,258.4 L596.4,228.3 L622.8,231.6 L642.6,215.6 L665.7,246.4 L688.8,218.5 L712.0,225.9 L735.1,246.9 L758.2,239.1 L781.3,260.0 L806.4,260.0 L827.5,260.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M262.9,260.0 L286.1,260.0 L309.2,260.0 L332.3,260.0 L355.4,260.0 L378.5,260.0 L401.6,260.0 L430.4,208.1 L447.8,179.7 L471.0,260.0 L494.1,217.2 L517.2,215.1 L540.3,260.0 L563.4,178.1 L596.4,260.0 L622.8,185.2 L642.6,254.1 L665.7,218.7 L688.8,235.2 L712.0,198.0 L735.1,177.2 L758.2,260.0 L781.3,260.0 L806.4,260.0 L827.5,260.0" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<path d="M262.9,260.0 L286.1,260.0 L309.2,260.0 L332.3,260.0 L355.4,260.0 L378.5,260.0 L401.6,260.0 L430.4,225.5 L447.8,214.0 L471.0,156.1 L494.1,205.5 L517.2,193.0 L540.3,194.1 L563.4,217.6 L596.4,163.8 L622.8,217.3 L642.6,260.0 L665.7,183.1 L688.8,169.1 L712.0,244.1 L735.1,217.1 L758.2,210.5 L781.3,260.0 L806.4,260.0 L827.5,260.0" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<text x="764.8" y="40" font-size="12" fill="#0b0b0b">executor-service nm5t2</text>
+<line x1="742.8" x2="758.8" y1="36" y2="36" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<text x="585.6" y="40" font-size="12" fill="#0b0b0b">executor-service g9bdv</text>
+<line x1="563.6" x2="579.6" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="406.4" y="40" font-size="12" fill="#0b0b0b">executor-service 7c5jv</text>
+<line x1="384.4" x2="400.4" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

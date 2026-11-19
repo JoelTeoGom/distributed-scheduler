@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Disk writes</text>
+<text x="64" y="40" font-size="12" fill="#52514e">writes per second on Docker's disk</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">1,250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">2,500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">3,750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">5,000</text>
+<text x="144.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="304.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="464.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="624.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<text x="784.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:00</text>
+<line x1="304.0" x2="304.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="308.0" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="544.0" x2="544.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="548.0" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M204.9,220.5 L220.9,259.5 L236.9,253.6 L252.9,252.0 L268.9,252.3 L284.9,252.7 L300.9,251.7 L318.2,191.3 L332.9,175.1 L348.9,176.0 L364.9,180.9 L387.8,184.6 L403.8,178.1 L419.8,182.7 L435.8,162.8 L453.0,175.6 L467.8,166.9 L483.8,182.5 L499.8,185.5 L515.8,173.0 L531.8,181.4 L547.8,166.5 L563.8,123.7 L580.9,152.1 L595.8,158.6 L611.8,163.0 L627.8,165.5 L648.8,179.4 L664.8,153.0 L680.8,165.6 L696.8,156.5 L718.1,177.5 L728.8,161.8 L744.8,162.1 L760.8,162.1 L776.8,174.3 L792.8,168.3 L808.8,170.5 L824.8,213.9 L841.8,252.1" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

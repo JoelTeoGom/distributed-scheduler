@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">MySQL writes</text>
+<text x="64" y="40" font-size="12" fill="#52514e">per second</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">500</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">1,000</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">1,500</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">2,000</text>
+<text x="123.4" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="242.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="361.1" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="480.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<text x="598.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:00</text>
+<text x="717.7" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:20</text>
+<text x="836.6" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:40</text>
+<line x1="242.3" x2="242.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="246.3" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="420.6" x2="420.6" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="424.6" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M169.7,259.1 L181.6,259.3 L193.5,258.7 L205.4,258.7 L217.3,258.7 L229.2,258.7 L241.0,258.5 L253.9,193.2 L264.8,155.3 L276.7,177.7 L288.6,191.9 L300.5,222.6 L312.4,180.0 L324.2,233.7 L336.1,185.5 L354.7,164.6 L364.7,131.8 L376.6,132.1 L388.4,182.8 L400.3,128.5 L412.2,127.4 L424.1,126.0 L436.0,135.9 L449.5,246.9 L459.8,259.3 L471.6,259.3 L483.5,259.4 L495.4,259.3 L507.3,259.4 L519.2,254.2 L531.1,254.3 L548.7,252.5 L559.8,147.8 L571.7,141.9 L583.5,184.9 L595.4,259.2 L607.3,259.4 L619.2,259.4 L631.1,259.0 L644.8,259.3 L654.9,259.1 L666.7,258.9 L678.6,151.4 L690.5,129.4 L702.4,138.0 L714.3,137.4 L726.2,134.3 L743.8,218.8 L754.9,156.2 L766.8,136.6 L778.7,133.5 L790.5,131.9 L802.4,131.2 L814.3,127.7 L826.2,152.9 L839.0,259.3 L850.0,259.3 L861.9,259.3" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M169.7,240.2 L181.6,259.4 L193.5,255.7 L205.4,255.7 L217.3,256.2 L229.2,255.4 L241.0,254.1 L253.9,200.5 L264.8,170.7 L276.7,180.2 L288.6,197.5 L300.5,219.1 L312.4,188.9 L324.2,231.3 L336.1,193.0 L354.7,177.7 L364.7,141.1 L376.6,146.9 L388.4,193.5 L400.3,141.6 L412.2,139.2 L424.1,137.6 L436.0,144.3 L449.5,240.7 L459.8,259.5 L471.6,259.4 L483.5,259.5 L495.4,259.1 L507.3,259.5 L519.2,256.4 L531.1,255.4 L548.7,255.7 L559.8,162.6 L571.7,158.4 L583.5,172.7 L595.4,259.4 L607.3,259.5 L619.2,259.4 L631.1,259.2 L644.8,259.2 L654.9,259.0 L666.7,259.0 L678.6,159.9 L690.5,147.2 L702.4,151.6 L714.3,156.0 L726.2,150.4 L743.8,220.3 L754.9,172.8 L766.8,152.2 L778.7,154.4 L790.5,150.8 L802.4,143.7 L814.3,141.8 L826.2,169.6 L839.0,259.4 L850.0,259.5 L861.9,259.3" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<text x="837.4" y="40" font-size="12" fill="#0b0b0b">redo fsyncs</text>
+<line x1="815.4" x2="831.4" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="757.2" y="40" font-size="12" fill="#0b0b0b">commits</text>
+<line x1="735.2" x2="751.2" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Disk writes</text>
+<text x="64" y="40" font-size="12" fill="#52514e">writes per second on Docker's disk</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">1,250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">2,500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">3,750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">5,000</text>
+<text x="129.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="259.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="389.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="519.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<text x="649.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:00</text>
+<text x="779.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">1:20</text>
+<line x1="259.0" x2="259.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="263.0" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="649.0" x2="649.0" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="653.0" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M176.7,233.6 L189.7,258.0 L202.7,256.3 L215.7,254.3 L228.7,255.5 L241.7,256.3 L254.7,256.2 L269.1,185.9 L280.7,157.8 L293.7,162.9 L306.7,159.0 L319.7,153.6 L332.7,157.6 L345.7,161.9 L358.7,151.7 L377.7,160.1 L389.9,176.6 L402.9,129.2 L415.9,153.4 L428.9,150.2 L441.9,166.6 L454.9,152.8 L467.9,146.6 L482.3,152.4 L493.9,157.1 L506.9,252.7 L519.9,225.1 L532.9,249.3 L545.9,203.2 L558.9,200.6 L571.9,255.0 L586.3,255.9 L603.7,256.1 L616.7,256.3 L629.7,150.7 L642.7,256.4 L655.7,257.3 L668.7,233.9 L681.7,257.9 L696.0,257.3 L707.7,122.1 L720.7,98.6 L733.7,95.4 L746.7,97.1 L759.7,183.2 L772.7,127.0 L785.7,106.2 L799.9,101.8 L811.7,102.5 L824.7,107.5 L837.7,222.1 L850.7,257.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>
