@@ -149,7 +149,8 @@ def main():
             if many:
                 lines += [f"### {run['label']}", ""]
             lines += [run_body(run["report"], folded=many), ""]
-            summary += [""] + events(run["report"]) if events(run["report"]) else []
+            if len(runs) <= 3 and events(run["report"]):  # a long sweep keeps its peak lines in its own README
+                summary += [""] + events(run["report"])
         section = "\n".join(lines).rstrip() + "\n"
 
         readme = test / "README.md"
