@@ -18,7 +18,6 @@ import subprocess
 import sys
 import time
 
-LEAD = 60  # seconds between seeding and the first due job: longer than the scheduler's lookahead
 MODEL_CRONS = [  # name, cron expression, tasks at scale 1
     ("minute", "* * * * *", 1000),
     ("five", "*/5 * * * *", 4000),
@@ -143,9 +142,10 @@ def main():
     parser.add_argument("--rate", type=int, default=50)
     parser.add_argument("--endpoint", default="lat=50&dist=lognormal")
     parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument("--lead", type=int, default=60, help="seconds between seeding and the first due job: longer than the scheduler's lookahead")
     args = parser.parse_args()
 
-    start = int(time.time()) + LEAD
+    start = int(time.time()) + args.lead
     result = (model if args.mode == "model" else steady)(args, start)
     print(json.dumps({"run": args.run, "start": start, "duration": args.duration, **result}))
 

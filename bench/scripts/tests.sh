@@ -4,12 +4,16 @@
 #   bench/scripts/tests.sh P3            # one test
 #   bench/scripts/tests.sh P1 P2 P3      # several, in order
 #   bench/scripts/tests.sh all           # P1 to P9, about 2 hours
+#   ROUND=r2 bench/scripts/tests.sh P3   # a later round: every run label starts with r2, next to round 1
 # Raw data: bench/results/<test>/runs/<time>/ (not committed). Report: bench/results/<test>/report.md + charts/.
 source "$(dirname "$0")/lib.sh"
 
 RESULTS=bench/results
 declare -A TEST_DIRS=([P1]=P1-smoke [P2]=P2-capacity [P3]=P3-normal-day [P4]=P4-0900-peak [P5]=P5-slow-endpoints
-  [P6]=P6-noisy-neighbour [P7]=P7-executor-dies [P8]=P8-mysql-outage [P9]=P9-long-run)
+  [P6]=P6-noisy-neighbour [P7]=P7-executor-dies [P8]=P8-mysql-outage [P9]=P9-long-run [P10]=P10-ceiling)
+ROUND="${ROUND:-}"
+
+label() { echo "${ROUND}${ROUND:+${1:+-}}${1:-}"; } # the run label, with the round in front
 
 # next_run prints a new run number: tenants and task names carry it, so a run can count and clean up its own.
 next_run() {
@@ -36,6 +40,13 @@ configure() {
   done
 }
 
+# set_env DEPLOYMENT KEY=VALUE...: changes a deployment's environment and waits for its new pods.
+set_env() {
+  local deployment="$1"; shift
+  kubectl -n "$NS" set env "deploy/$deployment" "$@" >/dev/null
+  kubectl -n "$NS" rollout status "deploy/$deployment" --timeout=300s >/dev/null
+}
+
 # start TEST LABEL: a run directory, telemetry and a clean fake endpoint. Sets OUT, RUN and TELEMETRY.
 start() {
   RUN="$(next_run)"
@@ -57,9 +68,9 @@ start() {
   log "$1 ${2:-} (run $RUN) -> $OUT"
 }
 
-# seed ARGS...: workload.py with this run's number. Sets LOAD_START and LOAD_END (epoch seconds).
+# seed ARGS...: workload.py with this run's number, the first job due LEAD_SECONDS later (15: the scheduler looks 10 s ahead). Sets LOAD_START and LOAD_END (epoch seconds).
 seed() {
-  python3 bench/scripts/workload.py "$@" --run "$RUN" > "$OUT/workload.json"
+  python3 bench/scripts/workload.py "$@" --run "$RUN" --lead "${LEAD_SECONDS:-15}" > "$OUT/workload.json"
   LOAD_START="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["start"])' "$OUT/workload.json")"
   LOAD_END=$(( LOAD_START + $(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["duration"])' "$OUT/workload.json") ))
   echo "load,$LOAD_START,$LOAD_END" >> "$OUT/phases.csv"
@@ -119,6 +130,8 @@ finish() {
                       IFNULL(http_status, ''), REPLACE(IFNULL(LEFT(error, 60), ''), ',', ';')
                FROM jobs WHERE $(tenant_range_sql "$RUN")" | tr '\t' ',' \
     | sed '1i key,tenant,priority,status,attempt,scheduled_s,claimed_s,finished_s,http_status,error' > "$OUT/jobs.csv"
+  # The run's jobs leave the hot table, so every run starts from the same small table and the archiver stays idle.
+  until [[ "$(mysql_value "DELETE FROM jobs WHERE $(tenant_range_sql "$RUN") LIMIT 20000; SELECT ROW_COUNT()")" == 0 ]]; do :; done
   python3 bench/scripts/report.py "$OUT" | tail -3
 }
 
@@ -132,6 +145,11 @@ print(round(len(arrivals) / max(span, 1), 1))
 EOF
 }
 
+# knee_reached SUSTAINED OFFERED P99: true when a step could not keep up, less than 90% of the load or p99 above 2 s.
+knee_reached() {
+  python3 -c 'import sys; got, rate, p99 = map(float, sys.argv[1:]); sys.exit(0 if got < 0.9 * rate or p99 > 2 else 1)' "$@"
+}
+
 p99() { python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["start_lag_all"]["p99_s"])' "$1/fake-endpoint-stats.json"; }
 
 # The model's minute crons fire on second :00; profile the second minute boundary of the load.
@@ -139,7 +157,7 @@ minute_peak() { echo $(( (LOAD_START / 60 + 2) * 60 - 5 )); }
 
 P1() {
   configure 2
-  start P1
+  start P1 "$(label)"
   seed model --scale 0.1 --duration 180
   profile_at "$(minute_peak)"
   finish
@@ -149,21 +167,21 @@ P2() {
   # One executor, more load each step until it breaks, then the same load on 2 and 3 executors.
   local rate knee=""
   configure 1
-  for rate in 50 100 200 400 800; do
-    start P2 "1x-$rate"
+  for rate in ${P2_RATES:-50 100 200 400 800}; do
+    start P2 "$(label "1x-$rate")"
     seed steady --rate "$rate" --duration 60 --endpoint "lat=50&dist=lognormal"
     profile_at $(( LOAD_START + 30 ))
     finish 180
     local got; got="$(sustained "$OUT")"
     echo "  $rate jobs/s offered, $got sustained, p99 $(p99 "$OUT") s"
-    if python3 -c 'import sys; got, rate, p99 = map(float, sys.argv[1:]); sys.exit(0 if got < 0.9 * rate or p99 > 2 else 1)' "$got" "$rate" "$(p99 "$OUT")"; then
+    if knee_reached "$got" "$rate" "$(p99 "$OUT")"; then
       knee="$rate"; break
     fi
   done
-  knee="${knee:-800}"
-  for executors in 2 3; do
+  knee="${knee:-$rate}"
+  for executors in ${P2_EXECUTORS-2 3}; do
     configure "$executors"
-  start P2 "${executors}x-$knee"
+    start P2 "$(label "${executors}x-$knee")"
     seed steady --rate "$knee" --duration 60 --endpoint "lat=50&dist=lognormal"
     profile_at $(( LOAD_START + 30 ))
     finish 180
@@ -174,7 +192,7 @@ P2() {
 
 P3() {
   configure 2
-  start P3
+  start P3 "$(label)"
   seed model --duration 300
   profile_at "$(minute_peak)"
   finish
@@ -182,7 +200,7 @@ P3() {
 
 P4() {
   configure 2
-  start P4
+  start P4 "$(label)"
   seed model --duration 480 --peak-in 60
   local peak; peak="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["peak"])' "$OUT/workload.json")"
   echo "  09:00 peak at $(date -d "@$peak" +%T)"
@@ -194,7 +212,7 @@ P5() {
   local timeout
   for timeout in 30 20; do
     configure 2
-  start P5 "timeout-$timeout"
+  start P5 "$(label "timeout-$timeout")"
     seed steady --rate 20 --duration 240 --endpoint "dist=uniform&min=10000&max=30000" --timeout "$timeout"
     profile_at $(( LOAD_START + 120 ))
     finish 400
@@ -203,7 +221,7 @@ P5() {
 
 P6() {
   configure 2
-  start P6
+  start P6 "$(label)"
   seed model --duration 300 --noisy-tenant
   profile_at "$(minute_peak)"
   finish 400
@@ -211,7 +229,7 @@ P6() {
 
 P7() {
   configure 2
-  start P7
+  start P7 "$(label)"
   seed model --duration 360
   profile_at "$(minute_peak)"
   kill_executor() {
@@ -225,7 +243,7 @@ P7() {
 
 P8() {
   configure 2
-  start P8
+  start P8 "$(label)"
   seed model --duration 360
   profile_at "$(minute_peak)"
   cut_mysql() {
@@ -241,11 +259,45 @@ P8() {
 
 P9() {
   configure 2
-  start P9
+  start P9 "$(label)"
   seed model --duration 1800
   profile_at $(( LOAD_START + 300 ))
   profile_at $(( LOAD_START + 1700 ))
   finish
+}
+
+P10() {
+  # With the scheduler out of the way (a tick every 200 ms, up to 5,000 jobs/s), how far 1, 2 and 3 executors go,
+  # then how many workers 2 of them need at the highest rate they kept up with.
+  local executors rate got passed sweep_rate="" workers
+  set_env scheduler-service SCHEDULE_INTERVAL=200ms
+  for executors in ${P10_EXECUTORS-1 2 3}; do
+    configure "$executors"
+    passed=""
+    for rate in ${P10_RATES:-1000 2000 3000 4000}; do
+      start P10 "$(label "${executors}x-$rate")"
+      seed steady --rate "$rate" --duration "${P10_SECONDS:-30}" --endpoint "lat=50&dist=lognormal"
+      profile_at $(( LOAD_START + 5 ))
+      finish 300
+      got="$(sustained "$OUT")"
+      echo "  $executors executors at $rate jobs/s: $got sustained, p99 $(p99 "$OUT") s"
+      knee_reached "$got" "$rate" "$(p99 "$OUT")" && break
+      passed="$rate"
+    done
+    if (( executors == 2 )); then sweep_rate="${passed:-1000}"; fi
+  done
+  sweep_rate="${P10_SWEEP_RATE:-${sweep_rate:-1000}}"
+  configure 2
+  for workers in ${P10_WORKERS:-250 1000 10000 30000}; do
+    set_env executor-service WORKER_COUNT="$workers"
+    start P10 "$(label "2x-$sweep_rate-w$workers")"
+    seed steady --rate "$sweep_rate" --duration "${P10_SECONDS:-30}" --endpoint "lat=50&dist=lognormal"
+    profile_at $(( LOAD_START + 5 ))
+    finish 300
+    echo "  2 executors × $workers workers at $sweep_rate jobs/s: $(sustained "$OUT") sustained, p99 $(p99 "$OUT") s"
+  done
+  set_env executor-service WORKER_COUNT=10000
+  set_env scheduler-service SCHEDULE_INTERVAL=1s
 }
 
 trap 'kill $TELEMETRY 2>/dev/null || true' EXIT
