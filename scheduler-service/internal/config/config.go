@@ -19,6 +19,8 @@ const (
 	defaultScheduleInterval    = "5s"
 	defaultScheduleLookahead   = "30s"
 	defaultScheduleBatchSize   = "1000"
+	// Each job takes 16 placeholders in the insert, and MySQL refuses statements with more than 65,535.
+	maxScheduleBatchSize = 4000
 )
 
 type Config struct {
@@ -94,8 +96,8 @@ func (c Config) validate() error {
 		problems = append(problems, errors.New("SCHEDULE_LOOKAHEAD must be positive"))
 	}
 
-	if c.ScheduleBatchSize <= 0 {
-		problems = append(problems, errors.New("SCHEDULE_BATCH_SIZE must be positive"))
+	if c.ScheduleBatchSize <= 0 || c.ScheduleBatchSize > maxScheduleBatchSize {
+		problems = append(problems, fmt.Errorf("SCHEDULE_BATCH_SIZE must be between 1 and %d: a bigger batch exceeds MySQL's 65,535 placeholders per statement", maxScheduleBatchSize))
 	}
 	return errors.Join(problems...)
 }
