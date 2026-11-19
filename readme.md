@@ -130,3 +130,7 @@ The platform was load-tested on a small AWS-shaped deployment (k3d plus MySQL an
 ## Status
 
 Work in progress. Design notes and the full discussion of alternatives live in [joel-software-notes](https://github.com/JoelTeoGom/joel-software-notes).
+
+## License
+
+[MIT](LICENSE).
