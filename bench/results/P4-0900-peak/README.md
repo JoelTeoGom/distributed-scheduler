@@ -49,6 +49,8 @@ The platform model for 8 minutes, with the daily 09:00 moved into the run. On th
 | all | 44,667 | 23.364 s | 77.384 s | 91.742 s | 94.138 s |
 
 - **09:00 peak:** 30,007 jobs due on the same second. The last one started **94.1 s** late (p50 43.3 s, p99 91.7 s); priority 0 p99 **91.6 s**.
+- **Peak throughput:** every job of the peak had started **94.1 s** after it (p99 91.7 s), **319 jobs/s**; 2,816 in its busiest second. First attempts that never reached the endpoint: **0**.
+- **Peak by priority** (p50 / p99 / max, first attempts): 0: 40.0 / 91.6 / 91.9 s; 1: 43.5 / 91.7 / 94.0 s; 2: 43.5 / 91.7 / 94.1 s; 3: 40.0 / 91.7 / 94.1 s.
 
 <details><summary>Charts</summary>
 
@@ -159,6 +161,8 @@ Run page: [reports/20261110T194554Z/report.md](reports/20261110T194554Z/report.m
 | all | 38,744 | 6.532 s | 23.437 s | 37.160 s | 37.768 s |
 
 - **09:00 peak:** 29,099 jobs due on the same second. The last one started **37.8 s** late (p50 9.0 s, p99 37.6 s); priority 0 p99 **23.4 s**.
+- **Peak throughput:** every job of the peak had started **50.1 s** after it (p99 46.5 s), **599 jobs/s**; 6,502 in its busiest second. First attempts that never reached the endpoint: **908**.
+- **Peak by priority** (p50 / p99 / max, first attempts): 0: 8.2 / 23.4 / 23.6 s; 1: 8.5 / 23.5 / 23.6 s; 2: 9.0 / 35.4 / 37.8 s; 3: 9.0 / 37.7 / 37.8 s.
 
 <details><summary>Charts</summary>
 
@@ -269,8 +273,8 @@ Run page: [reports/20261119T204356Z-r2/report.md](reports/20261119T204356Z-r2/re
 | all | 39,366 | 3.704 s | 21.590 s | 34.518 s | 34.665 s |
 
 - **09:00 peak:** 29,893 jobs due on the same second. The last one started **34.7 s** late (p50 13.3 s, p99 34.6 s); priority 0 p99 **34.5 s**.
-- **Peak throughput:** 862 jobs/s on average until the last one started, 7,379 in its busiest second.
-- **Peak by priority** (p50 / p99 / max): 0: 13.2 / 34.5 / 34.5 s; 1: 13.2 / 34.6 / 34.6 s; 2: 13.6 / 34.6 / 34.7 s; 3: 13.1 / 34.5 / 34.6 s.
+- **Peak throughput:** every job of the peak had started **40.0 s** after it (p99 34.6 s), **749 jobs/s**; 7,379 in its busiest second. First attempts that never reached the endpoint: **112**.
+- **Peak by priority** (p50 / p99 / max, first attempts): 0: 13.2 / 34.5 / 34.5 s; 1: 13.2 / 34.6 / 34.6 s; 2: 13.6 / 34.6 / 34.7 s; 3: 13.1 / 34.5 / 34.6 s.
 
 <details><summary>Charts</summary>
 
@@ -376,13 +380,16 @@ _2026-11-19._ The same load and resources with the fixed scheduler (the `r2` run
 
 | | Round 1 | Round 2 |
 |---|---|---|
-| Last job of the peak | 94.1 s late | 37.8 s late |
-| p50 of the peak | 43.3 s | 9.0 s |
-| Priority 0 and 1, worst | 91.9 and 94.0 s | 23.6 s |
-| Priority 2 and 3, worst | 94.1 s | 37.8 s |
+| Every job of the peak started, retries included | 94.1 s | 50.1 s |
+| Peak drained at | 319 jobs/s | 599 jobs/s |
+| First attempts that never reached the endpoint | 0 | 908 |
+| p50 of the peak, first attempts | 43.3 s | 9.0 s |
+| Priority 0 and 1, worst first attempt | 91.9 and 94.0 s | 23.6 s |
+| Priority 2 and 3, worst first attempt | 94.1 s | 37.8 s |
 
-- **The whole peak now runs within the 60 s objective.** Priority 0 is still far from its 5 s.
-- **The executors are now the limit.** The scheduler's own setting, 1,000 jobs per tick and one tick a second, creates the last job of the peak about 19 s after it. The two executors then need until 37.8 s: at 0.5 vCPU each they fire 800 to 900 jobs per second ([P10](../P10-ceiling/README.md)), and they ran at their quota, throttled up to 11 s per second.
+- **The whole peak now runs within the 60 s objective,** at 50.1 s. Priority 0 is still far from its 5 s.
+- **908 first attempts never reached the endpoint.** With thousands of calls fired at once, those requests timed out after 30 s before arriving, and the jobs started with their retry, up to 50 s after the peak. Counting only first attempts, as an earlier version of this page did, gave 37.8 s.
+- **The executors are now the limit.** The scheduler's own setting, 1,000 jobs per tick and one tick a second, creates the last job of the peak about 19 s after it. The two executors then need until 37.8 s for the first attempts: at 0.5 vCPU each they fire 800 to 900 jobs per second ([P10](../P10-ceiling/README.md)), and they ran at their quota, throttled up to 11 s per second.
 - **Priority started to count.** Jobs now exist before the executors can take them, and the claim takes priority 0 and 1 first, so they were done 14 s before 2 and 3.
 - **20 jobs succeeded twice,** against 1 in round 1. All were very slow endpoints that answered close to the 30 s timeout: with the executors throttled, the answer came after the client had given up, and the retry ran the job again.
 - MySQL peaked at 892 of its 2,000 millicores and 2,355 commits/s, a little more CPU than in round 1, with room left.
@@ -393,18 +400,19 @@ _2026-11-19._ The `r3` run above is round 2 with one change: `GOMAXPROCS` set fr
 
 | The 09:00 peak | `r2`, GOMAXPROCS 12 | `r3`, GOMAXPROCS 1 | Change |
 |---|---|---|---|
-| Jobs per second until the last job started | 766 | 854 | +11% |
-| Last job of the peak | 37.8 s late | 34.7 s late | −8% |
-| p50 / p90 / p99 | 9.0 / 30.6 / 37.6 s | 13.3 / 21.7 / 34.6 s | p90 −29%, p50 worse |
+| Peak drained at (every job, retries included) | 599 jobs/s | 749 jobs/s | +25% |
+| Every job of the peak started | 50.1 s | 40.0 s | −20% |
+| First attempts that never reached the endpoint | 908 | 112 | −88% |
+| First attempts: p50 / p90 / p99 | 9.0 / 30.6 / 37.6 s | 13.3 / 21.7 / 34.6 s | p90 −29%, p50 worse |
 | Executor throttling, average / max | 2,685 / 11,267 ms/s | 976 / 6,844 ms/s | −64% |
 | Executor CPU, average | 253 millicores | 194 millicores | −23% |
-| Jobs per millicore | 3.0 | 4.4 | +45% |
+| Jobs per millicore | 2.4 | 3.9 | +63% |
 | Executor memory, max | 569 MiB | 397 MiB | −30% |
 | Worst minute burst | 0.60 s (4.26 s right after the peak) | 0.49 s | better |
 
-- **At the peak, the fix helps.** The executors drained the peak 11% faster while using 23% less CPU, so each millicore did 45% more work, and the throttling fell by two thirds.
-- **The scheduler is the limit again, so priority stopped counting.** With faster executors, jobs are fired as soon as they exist, and the scheduler creates them at 1,000 per tick, one tick a second, in order of due time. Every priority finished around 34.6 s; with GOMAXPROCS 12, priority 0 and 1 finished at 23.6 s. The next setting to try is a shorter tick.
+- **At the peak, the fix helps.** The executors drained the peak 25% faster while using 23% less CPU, so each millicore did 63% more work. The throttling fell by two thirds, and the calls that timed out before reaching the endpoint fell from 908 to 112.
+- **The scheduler is the limit again, so priority stopped counting.** With faster executors, jobs are fired as soon as they exist, and the scheduler creates them at 1,000 per tick, one tick a second, in order of due time. Every priority's first attempts finished around 34.6 s; with GOMAXPROCS 12, priority 0 and 1 finished at 23.6 s. The next setting to try is a shorter tick.
 - **Not a win everywhere.** One executor far past its capacity ran 20% fewer jobs with GOMAXPROCS 1 ([P2](../P2-capacity/README.md#round-2-measured-in-the-bench)).
 - 31 jobs succeeded twice, against 20: the same kind as before, very slow endpoints answering at the edge of the 30 s timeout.
 
-**From round 1 to here,** with the same 2 executors at 0.5 vCPU and the same MySQL: the peak drains at 854 jobs/s instead of ~320 (×2.7), and its last job starts 34.7 s late instead of 94.1 s (−63%).
+**From round 1 to here,** with the same 2 executors at 0.5 vCPU and the same MySQL: the peak drains at 749 jobs/s instead of 319 (×2.35), and its last job starts 40.0 s late instead of 94.1 s (−57%).

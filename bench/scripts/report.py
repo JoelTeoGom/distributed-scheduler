@@ -230,12 +230,20 @@ def main():
         if peak_lags:
             extra.append(f"- **09:00 peak:** {len(peak_lags):,} jobs due on the same second. The last one started **{max(peak_lags):.1f} s** late"
                          f" (p50 {percentile(peak_lags, 50):.1f} s, p99 {percentile(peak_lags, 99):.1f} s); priority 0 p99 **{percentile(peak_p0, 99):.1f} s**.")
-            # How fast the peak was drained: its jobs over the time until the last one started, and its busiest second.
+            # How fast the peak was drained: when each of its jobs first reached the endpoint, whatever the attempt.
+            # A first attempt that never arrived (a timeout before the call) makes the job start with its retry.
+            first_call = {}
+            for e in events:
+                if int(float(e["scheduled_s"])) == workload["peak"]:
+                    lag = int(e["arrived_ms"]) / 1000 - workload["peak"]
+                    first_call[e["key"]] = min(first_call.get(e["key"], lag), lag)
+            started = sorted(first_call.values())
+            missed = len(first_call) - len(peak_lags)
             per_second = Counter(int(int(e["arrived_ms"]) / 1000) for e in first if int(float(e["scheduled_s"])) == workload["peak"])
-            drain = max(max(peak_lags), 1)
-            extra.append(f"- **Peak throughput:** {len(peak_lags) / drain:,.0f} jobs/s on average until the last one started,"
-                         f" {max(per_second.values()):,} in its busiest second.")
-            extra.append("- **Peak by priority** (p50 / p99 / max): " + "; ".join(
+            extra.append(f"- **Peak throughput:** every job of the peak had started **{started[-1]:.1f} s** after it (p99 {percentile(started, 99):.1f} s),"
+                         f" **{len(started) / max(started[-1], 1):,.0f} jobs/s**; {max(per_second.values()):,} in its busiest second."
+                         f" First attempts that never reached the endpoint: **{missed:,}**.")
+            extra.append("- **Peak by priority** (p50 / p99 / max, first attempts): " + "; ".join(
                 f"{priority}: {percentile(lags, 50):.1f} / {percentile(lags, 99):.1f} / {max(lags):.1f} s"
                 for priority, lags in sorted(defaultdict(list, {p: [float(e["lag_s"]) for e in first
                     if int(float(e["scheduled_s"])) == workload["peak"] and e["priority"] == p] for p in "0123"}).items()) if lags) + ".")

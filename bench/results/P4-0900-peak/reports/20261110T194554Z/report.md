@@ -23,6 +23,8 @@
 | all | 44,667 | 23.364 s | 77.384 s | 91.742 s | 94.138 s |
 
 - **09:00 peak:** 30,007 jobs due on the same second. The last one started **94.1 s** late (p50 43.3 s, p99 91.7 s); priority 0 p99 **91.6 s**.
+- **Peak throughput:** every job of the peak had started **94.1 s** after it (p99 91.7 s), **319 jobs/s**; 2,816 in its busiest second. First attempts that never reached the endpoint: **0**.
+- **Peak by priority** (p50 / p99 / max, first attempts): 0: 40.0 / 91.6 / 91.9 s; 1: 43.5 / 91.7 / 94.0 s; 2: 43.5 / 91.7 / 94.1 s; 3: 40.0 / 91.7 / 94.1 s.
 
 ## Charts
 
