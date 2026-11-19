@@ -5,6 +5,7 @@
 
 One CSV row per metric and sample: time, component, metric, value.
   pods and containers  cpu_mcores, cpu_limit_pct, throttled_ms_per_s, mem_mib   (cgroup v1 files in WSL)
+  pods                 tcp_inuse, tcp_time_wait: sockets in the pod's network namespace (/proc/<pid>/net/sockstat)
   disk                 writes_per_s, write_mb_per_s, write_await_ms, util_pct   (/proc/diskstats)
   mysql                commits_per_s, redo_fsyncs_per_s, row_lock_waits_per_s, threads_running, connections
   queue                pending, running, succeeded, dead, succeeded_per_s, dead_per_s
@@ -12,12 +13,14 @@ One CSV row per metric and sample: time, component, metric, value.
 """
 import argparse
 import csv
+import glob
 import json
 import os
 import resource
 import signal
 import subprocess
 import time
+from pathlib import Path
 
 CGROUP = "/sys/fs/cgroup"
 NAMESPACE = "scheduler"
@@ -65,6 +68,21 @@ def cgroup_dirs():
     return dirs
 
 
+def read_sockets(relative):
+    """TCP sockets in use and in TIME_WAIT, read through any process of the pod: they all share its network namespace."""
+    for procs in glob.glob(f"{CGROUP}/cpu/{relative}/*/cgroup.procs"):
+        pids = Path(procs).read_text().split()
+        if not pids:
+            continue
+        try:
+            fields = Path(f"/proc/{pids[0]}/net/sockstat").read_text().split("TCP:")[1].split("\n")[0].split()
+        except (OSError, IndexError):
+            continue
+        values = dict(zip(fields[::2], map(int, fields[1::2])))
+        return {"tcp_inuse": values.get("inuse", 0), "tcp_time_wait": values.get("tw", 0)}
+    return {}
+
+
 def read_cgroup(relative):
     cpu = read_keyed(f"{CGROUP}/cpu/{relative}/cpu.stat")
     memory = read_keyed(f"{CGROUP}/memory/{relative}/memory.stat")
@@ -76,6 +94,7 @@ def read_cgroup(relative):
         "limit_cores": quota / period if quota > 0 else None,
         # Working set, as Kubernetes counts it: usage minus the page cache that can be dropped.
         "mem_bytes": read_int(f"{CGROUP}/memory/{relative}/memory.usage_in_bytes") - memory.get("total_inactive_file", 0),
+        "sockets": read_sockets(relative) if "/kubepods/" in relative else {},
     }
 
 
@@ -153,6 +172,7 @@ def main():
                         rows.append((component, "cpu_limit_pct", round(cores / sample["limit_cores"] * 100, 1)))
                     rows.append((component, "throttled_ms_per_s", round((sample["throttled_ns"] - before["throttled_ns"]) / 1e6 / elapsed, 1)))
                     rows.append((component, "mem_mib", round(sample["mem_bytes"] / 2**20, 1)))
+                    rows += [(component, metric, value) for metric, value in sample["sockets"].items()]
 
                 disk_now, disk_before = current["disk"], previous["disk"]
                 if disk_now and disk_before:
