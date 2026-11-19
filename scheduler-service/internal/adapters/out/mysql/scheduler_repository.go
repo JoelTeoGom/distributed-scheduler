@@ -16,12 +16,13 @@ import (
 type SchedulerRepository struct {
 	db        *sql.DB
 	lookahead time.Duration
+	batchSize int
 }
 
 var _ ports.SchedulerRepository = (*SchedulerRepository)(nil)
 
-func NewSchedulerRepository(db *sql.DB, lookahead time.Duration) *SchedulerRepository {
-	return &SchedulerRepository{db: db, lookahead: lookahead}
+func NewSchedulerRepository(db *sql.DB, lookahead time.Duration, batchSize int) *SchedulerRepository {
+	return &SchedulerRepository{db: db, lookahead: lookahead, batchSize: batchSize}
 }
 
 func (r *SchedulerRepository) ScheduleJobs(ctx context.Context, now time.Time, nextRuns ports.NextRunCalculator) error {
@@ -31,7 +32,7 @@ func (r *SchedulerRepository) ScheduleJobs(ctx context.Context, now time.Time, n
 	}
 	defer tx.Rollback()
 
-	tasks, err := selectScheduledTasks(ctx, tx, now.Add(r.lookahead))
+	tasks, err := selectScheduledTasks(ctx, tx, now.Add(r.lookahead), r.batchSize)
 	if err != nil {
 		return err
 	}
@@ -74,15 +75,15 @@ func nextRunAfterFiring(task domain.Task, nextRuns ports.NextRunCalculator) (sql
 	return sql.NullTime{Time: next, Valid: true}, nil
 }
 
-func selectScheduledTasks(ctx context.Context, tx *sql.Tx, horizon time.Time) ([]domain.Task, error) {
+func selectScheduledTasks(ctx context.Context, tx *sql.Tx, horizon time.Time, batchSize int) ([]domain.Task, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT `+taskColumns()+`
 		FROM tasks
 		WHERE status = 'active' AND next_run_at <= ?
 		ORDER BY next_run_at
-		LIMIT 1000
+		LIMIT ?
 		FOR UPDATE`,
-		horizon)
+		horizon, batchSize)
 	if err != nil {
 		return nil, fmt.Errorf("select scheduled tasks: %w", err)
 	}

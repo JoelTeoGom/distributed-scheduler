@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -17,6 +18,7 @@ const (
 	defaultShutdownGracePeriod = "30s"
 	defaultScheduleInterval    = "5s"
 	defaultScheduleLookahead   = "30s"
+	defaultScheduleBatchSize   = "1000"
 )
 
 type Config struct {
@@ -26,6 +28,8 @@ type Config struct {
 	ShutdownGracePeriod time.Duration
 	ScheduleInterval    time.Duration
 	ScheduleLookahead   time.Duration
+	// The most tasks one tick turns into jobs, in one transaction.
+	ScheduleBatchSize int
 	// Serves Go's pprof on this address when set, for profiling. Off by default.
 	PprofAddr string
 }
@@ -51,6 +55,11 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse SCHEDULE_LOOKAHEAD: %w", err)
 	}
 
+	scheduleBatchSize, err := strconv.Atoi(getEnvOrDefault("SCHEDULE_BATCH_SIZE", defaultScheduleBatchSize))
+	if err != nil {
+		return Config{}, fmt.Errorf("parse SCHEDULE_BATCH_SIZE: %w", err)
+	}
+
 	config := Config{
 		ServiceName:         getEnvOrDefault("SERVICE_NAME", defaultServiceName),
 		ServiceVersion:      getEnvOrDefault("SERVICE_VERSION", defaultServiceVersion),
@@ -58,6 +67,7 @@ func Load() (Config, error) {
 		ShutdownGracePeriod: shutdownGracePeriod,
 		ScheduleInterval:    scheduleInterval,
 		ScheduleLookahead:   scheduleLookahead,
+		ScheduleBatchSize:   scheduleBatchSize,
 		PprofAddr:           os.Getenv("PPROF_ADDR"),
 	}
 	if err := config.validate(); err != nil {
@@ -82,6 +92,10 @@ func (c Config) validate() error {
 
 	if c.ScheduleLookahead <= 0 {
 		problems = append(problems, errors.New("SCHEDULE_LOOKAHEAD must be positive"))
+	}
+
+	if c.ScheduleBatchSize <= 0 {
+		problems = append(problems, errors.New("SCHEDULE_BATCH_SIZE must be positive"))
 	}
 	return errors.Join(problems...)
 }
