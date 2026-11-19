@@ -20,6 +20,8 @@ const (
 	defaultJobTimeLimitSeconds = "10"
 	defaultWorkerCount         = "50"
 	defaultAllowPrivate        = "false"
+	defaultMaxOpenConnections  = "5"
+	defaultMaxIdleConnections  = "5"
 )
 
 type Config struct {
@@ -35,6 +37,9 @@ type Config struct {
 	AllowPrivateDestinations bool
 	// Serves Go's pprof on this address when set, for profiling. Off by default.
 	PprofAddr string
+	// Claims and result saves share this pool, so it bounds how many run at once.
+	MaxOpenConnections int
+	MaxIdleConnections int
 }
 
 // Variables already set in the environment win over .env.local, so a container needs no file.
@@ -68,6 +73,16 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse ALLOW_PRIVATE_DESTINATIONS: %w", err)
 	}
 
+	maxOpenConnections, err := strconv.Atoi(getEnvOrDefault("MYSQL_MAX_OPEN_CONNS", defaultMaxOpenConnections))
+	if err != nil {
+		return Config{}, fmt.Errorf("parse MYSQL_MAX_OPEN_CONNS: %w", err)
+	}
+
+	maxIdleConnections, err := strconv.Atoi(getEnvOrDefault("MYSQL_MAX_IDLE_CONNS", defaultMaxIdleConnections))
+	if err != nil {
+		return Config{}, fmt.Errorf("parse MYSQL_MAX_IDLE_CONNS: %w", err)
+	}
+
 	executorID := os.Getenv("EXECUTOR_ID")
 	if executorID == "" {
 		// In Kubernetes the hostname is the pod name.
@@ -87,6 +102,8 @@ func Load() (Config, error) {
 		WorkerCount:              workerCount,
 		AllowPrivateDestinations: allowPrivateDestinations,
 		PprofAddr:                os.Getenv("PPROF_ADDR"),
+		MaxOpenConnections:       maxOpenConnections,
+		MaxIdleConnections:       maxIdleConnections,
 	}
 	if err := config.validate(); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)
@@ -118,6 +135,14 @@ func (c Config) validate() error {
 
 	if c.WorkerCount <= 0 {
 		problems = append(problems, errors.New("WORKER_COUNT must be positive"))
+	}
+
+	if c.MaxOpenConnections <= 0 {
+		problems = append(problems, errors.New("MYSQL_MAX_OPEN_CONNS must be positive"))
+	}
+
+	if c.MaxIdleConnections < 0 || c.MaxIdleConnections > c.MaxOpenConnections {
+		problems = append(problems, errors.New("MYSQL_MAX_IDLE_CONNS must be between 0 and MYSQL_MAX_OPEN_CONNS"))
 	}
 	return errors.Join(problems...)
 }

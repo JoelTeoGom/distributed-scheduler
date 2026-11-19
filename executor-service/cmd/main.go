@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	db, err := mysql.Open(ctx, config.DatabaseDSN)
+	db, err := mysql.Open(ctx, config.DatabaseDSN, config.MaxOpenConnections, config.MaxIdleConnections)
 	if err != nil {
 		log.Fatalf("open database: %v", err)
 	}

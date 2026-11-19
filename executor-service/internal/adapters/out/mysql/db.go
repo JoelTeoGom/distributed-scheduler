@@ -10,13 +10,11 @@ import (
 )
 
 const (
-	maxOpenConnections = 5
-	maxIdleConnections = 5
 	connectionLifetime = 5 * time.Minute
 	pingTimeout        = 5 * time.Second
 )
 
-func Open(ctx context.Context, dsn string) (*sql.DB, error) {
+func Open(ctx context.Context, dsn string, maxOpenConnections, maxIdleConnections int) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("mysql: open: %w", err)
