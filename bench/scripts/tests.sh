@@ -56,7 +56,7 @@ start() {
     echo "test=$1 label=${2:-} run=$RUN date=$(date -u +%FT%TZ) commit=$(git rev-parse --short HEAD)"
     echo "executors=$(kubectl -n "$NS" get deploy executor-service -o jsonpath='{.spec.replicas}')"
     kubectl -n "$NS" get deploy executor-service scheduler-service reconciler-service archiver-service \
-      -o jsonpath='{range .items[*]}{.metadata.name}: {range .spec.template.spec.containers[0].env[*]}{.name}={.value} {end}{"\n"}{end}'
+      -o jsonpath='{range .items[*]}{.metadata.name}: {range .spec.template.spec.containers[0].env[*]}{.name}={.value}{.valueFrom.resourceFieldRef.resource} {end}{"\n"}{end}'
     bench/scripts/durability.sh
     echo "mysql_toxics=$(curl -fsS "$TOXIPROXY_URL/proxies/mysql/toxics")"
   } > "$OUT/run.txt"
