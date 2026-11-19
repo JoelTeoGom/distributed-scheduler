@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Calls reaching the customers' endpoints</text>
+<text x="64" y="40" font-size="12" fill="#52514e">calls per second</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">1,250</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">2,500</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">3,750</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">5,000</text>
+<text x="161.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="357.6" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="553.4" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="749.2" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<line x1="357.6" x2="357.6" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="361.6" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="651.3" x2="651.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="655.3" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M357.6,218.8 L367.4,218.8 L377.2,218.8 L387.0,218.8 L396.8,218.8 L406.6,218.8 L416.4,218.8 L426.2,218.8 L436.0,218.8 L445.7,259.3 L455.5,178.3 L465.3,249.4 L475.1,188.2 L494.7,177.6 L504.5,218.8 L514.3,218.8 L524.0,218.8 L533.8,218.8 L543.6,218.8 L553.4,218.8 L573.0,245.4 L582.8,151.0 L602.4,254.3 L612.1,152.2 L621.9,249.5 L631.7,244.3 L641.5,238.4 L651.3,179.5 L661.1,258.2 L670.9,257.4 L680.7,259.9 L690.4,259.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M357.6,260.0 L367.4,260.0 L377.2,260.0 L387.0,260.0 L396.8,260.0 L406.6,260.0 L416.4,260.0 L426.2,260.0 L436.0,260.0 L445.7,260.0 L455.5,260.0 L465.3,260.0 L475.1,260.0 L494.7,260.0 L504.5,260.0 L514.3,260.0 L524.0,260.0 L533.8,260.0 L543.6,260.0 L553.4,260.0 L573.0,260.0 L582.8,260.0 L602.4,260.0 L612.1,260.0 L621.9,260.0 L631.7,260.0 L641.5,260.0 L651.3,260.0 L661.1,260.0 L670.9,260.0 L680.7,260.0 L690.4,260.0" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<text x="863.8" y="40" font-size="12" fill="#0b0b0b">retries</text>
+<line x1="841.8" x2="857.8" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="737.4" y="40" font-size="12" fill="#0b0b0b">first attempts</text>
+<line x1="715.4" x2="731.4" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

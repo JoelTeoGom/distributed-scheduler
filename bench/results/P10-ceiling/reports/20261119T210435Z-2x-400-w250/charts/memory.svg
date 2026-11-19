@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Memory</text>
+<text x="64" y="40" font-size="12" fill="#52514e">MiB in use, per pod</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">12</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">25</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">38</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">50</text>
+<text x="64.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:30</text>
+<text x="179.6" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="295.1" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:10</text>
+<text x="410.7" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="526.2" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:10</text>
+<text x="641.8" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="757.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:30</text>
+<text x="872.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<line x1="410.7" x2="410.7" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="414.7" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="757.3" x2="757.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="761.3" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M271.1,230.7 L294.2,230.7 L317.4,230.7 L340.5,230.7 L363.6,230.7 L386.7,230.7 L409.8,221.3 L434.6,167.7 L456.0,155.8 L479.1,151.2 L502.3,150.8 L525.4,131.5 L548.5,125.3 L571.6,129.4 L594.7,124.0 L619.8,138.5 L650.1,122.4 L673.2,137.6 L696.3,143.8 L719.4,126.1 L742.5,122.4 L765.6,144.2 L788.8,144.2 L813.5,144.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M271.1,235.3 L294.2,235.3 L317.4,235.3 L340.5,235.3 L363.6,235.3 L386.7,235.3 L409.8,227.5 L434.6,184.6 L456.0,166.1 L479.1,157.8 L502.3,147.5 L525.4,149.2 L548.5,146.7 L571.6,152.1 L594.7,147.5 L619.8,141.8 L650.1,150.0 L673.2,152.5 L696.3,149.2 L719.4,143.8 L742.5,147.1 L765.6,152.5 L788.8,152.5 L813.5,152.5" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<path d="M271.1,239.0 L294.2,239.0 L317.4,218.4 L340.5,217.6 L363.6,216.7 L386.7,215.9 L409.8,215.9 L434.6,213.4 L456.0,215.1 L479.1,215.1 L502.3,214.3 L525.4,214.7 L548.5,214.7 L571.6,213.0 L594.7,213.9 L619.8,213.4 L650.1,214.3 L673.2,214.3 L696.3,214.3 L719.4,214.3 L742.5,214.3 L765.6,213.9 L788.8,213.9 L813.5,213.9" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<text x="758.2" y="40" font-size="12" fill="#0b0b0b">scheduler-service z8c97</text>
+<line x1="736.2" x2="752.2" y1="36" y2="36" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<text x="579.0" y="40" font-size="12" fill="#0b0b0b">executor-service x84vt</text>
+<line x1="557.0" x2="573.0" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="399.8" y="40" font-size="12" fill="#0b0b0b">executor-service 29zb4</text>
+<line x1="377.8" x2="393.8" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

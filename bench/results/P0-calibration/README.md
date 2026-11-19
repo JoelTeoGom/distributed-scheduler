@@ -55,6 +55,9 @@ The fake endpoint misses the overhead target, but it does not affect what the te
 >
 > **Update after P1-P9:** the same blocks show up in every test, every ~31 s: a whole second of jobs claimed after its time, 0.3 to 1 s late. They coincide with gaps in the telemetry, which also queries MySQL, and with bursts of disk writes. Linux writes dirty pages back every 30 s (`vm.dirty_expire_centisecs = 3000`), so the likely cause is the host's writeback stalling MySQL's `fsync`s, and the claim with them: a limit of the bench, not of the executor. Not proven yet: lowering that setting should make the late blocks change their rhythm.
 
+> [!NOTE]
+> **GOMAXPROCS is 12 in every pod.** _Measured on 2026-11-19._ Go 1.25 sets GOMAXPROCS from the container's CPU limit, but not in this bench: a binary built with Go 1.25.3 in a pod limited to 0.5 CPU picks 12, and a runtime trace of the running executor shows `/sched/gomaxprocs:threads` = 12. WSL mounts cgroups in hybrid mode (v1 controllers, plus cgroup v2 at `/sys/fs/cgroup/unified`), and Go does not read the v1 limit there. The executors run 12 threads on half a CPU, burn their quota in bursts and get throttled, which is how throttling reaches 11 s per second. On EKS with cgroup v2, Go would pick 1. Setting `GOMAXPROCS` from the pod's limit (`resourceFieldRef: limits.cpu`) gives 1 here too; with it, one executor was throttled far less but ran 20% fewer jobs ([P2, round 2](../P2-capacity/README.md#round-2-measured-in-the-bench)).
+
 Also seen: during the reference run the executor was throttled up to 522 ms per second at 85 millicores on average, so it bursts above its 0.5 vCPU at the top of each second, when 50 calls fire at once.
 
 The MySQL commit rate of this run is wrong (`Com_commit` misses autocommit statements); the telemetry now reads `Handler_commit`.

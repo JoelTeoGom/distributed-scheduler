@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="920" height="300" fill="#ffffff"/>
+<text x="64" y="22" font-size="15" font-weight="600" fill="#0b0b0b">Memory</text>
+<text x="64" y="40" font-size="12" fill="#52514e">MiB in use, per pod</text>
+<line x1="64" x2="896" y1="260.0" y2="260.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="264.0" font-size="11" fill="#52514e" text-anchor="end">0</text>
+<line x1="64" x2="896" y1="208.5" y2="208.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="212.5" font-size="11" fill="#52514e" text-anchor="end">25</text>
+<line x1="64" x2="896" y1="157.0" y2="157.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="161.0" font-size="11" fill="#52514e" text-anchor="end">50</text>
+<line x1="64" x2="896" y1="105.5" y2="105.5" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="109.5" font-size="11" fill="#52514e" text-anchor="end">75</text>
+<line x1="64" x2="896" y1="54.0" y2="54.0" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="58.0" font-size="11" fill="#52514e" text-anchor="end">100</text>
+<text x="64.0" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:30</text>
+<text x="179.6" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:20</text>
+<text x="295.1" y="278" font-size="11" fill="#52514e" text-anchor="middle">-0:10</text>
+<text x="410.7" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:00</text>
+<text x="526.2" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:10</text>
+<text x="641.8" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:20</text>
+<text x="757.3" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:30</text>
+<text x="872.9" y="278" font-size="11" fill="#52514e" text-anchor="middle">0:40</text>
+<line x1="410.7" x2="410.7" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="414.7" y="65" font-size="11" fill="#52514e">load starts</text>
+<line x1="757.3" x2="757.3" y1="54" y2="260" stroke="#52514e" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="761.3" y="65" font-size="11" fill="#52514e">load ends</text>
+<path d="M265.4,242.5 L288.5,242.5 L311.6,242.5 L334.8,242.5 L357.9,242.5 L390.2,242.5 L413.3,242.5 L438.5,242.5 L459.5,207.9 L482.6,207.9 L505.7,208.1 L528.8,196.6 L552.0,193.3 L575.1,187.9 L598.2,188.1 L623.3,174.9 L644.4,174.9 L667.5,174.7 L690.6,174.7 L713.7,174.7 L736.9,171.4 L769.1,167.3 L792.2,167.3 L817.2,167.3" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<path d="M265.4,240.2 L288.5,240.2 L311.6,240.0 L334.8,240.0 L357.9,240.0 L390.2,240.0 L413.3,207.1 L438.5,175.1 L459.5,176.6 L482.6,177.0 L505.7,164.8 L528.8,164.2 L552.0,165.9 L575.1,171.0 L598.2,157.8 L623.3,157.2 L644.4,158.6 L667.5,166.7 L690.6,156.2 L713.7,152.3 L736.9,163.4 L769.1,148.6 L792.2,148.6 L817.2,148.6" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<path d="M265.4,236.9 L288.5,236.9 L311.6,235.1 L334.8,235.3 L357.9,234.9 L390.2,235.3 L413.3,235.1 L438.5,234.9 L459.5,234.9 L482.6,234.9 L505.7,235.3 L528.8,234.7 L552.0,234.2 L575.1,233.6 L598.2,233.4 L623.3,233.4 L644.4,233.6 L667.5,233.6 L690.6,233.6 L713.7,233.6 L736.9,233.6 L769.1,234.5 L792.2,234.5 L817.2,234.5" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<text x="758.2" y="40" font-size="12" fill="#0b0b0b">scheduler-service z8c97</text>
+<line x1="736.2" x2="752.2" y1="36" y2="36" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<text x="579.0" y="40" font-size="12" fill="#0b0b0b">executor-service hcnnq</text>
+<line x1="557.0" x2="573.0" y1="36" y2="36" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/>
+<text x="399.8" y="40" font-size="12" fill="#0b0b0b">executor-service dkjbt</text>
+<line x1="377.8" x2="393.8" y1="36" y2="36" stroke="#2a78d6" stroke-width="3" stroke-linecap="round"/>
+<line x1="64" x2="896" y1="260" y2="260" stroke="#52514e" stroke-width="1"/>
+</svg>

@@ -15,6 +15,7 @@ BENCHMARKS = RESULTS.parent.parent / "benchmarks.md"
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a"]
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e6e5e1"
 FONT = "-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+ROUND_NOTES = {"r3": "round 2 with GOMAXPROCS=1, squares"}  # what a round changed, for the chart's subtitle
 
 
 def numbers(report):
@@ -69,37 +70,53 @@ def runs_table(runs, link_prefix=""):
 
 
 def capacity_chart(path, runs):
-    """Offered against sustained jobs per second, one line per executor count."""
-    width, height, left, right, top, bottom = 640, 320, 64, 24, 54, 44
+    """Offered against sustained jobs per second: one colour per executor count, round 1 dashed."""
+    points = {}
+    for run in runs:
+        round_name, executors, offered = re.match(r"(?:(r\d+)-)?(\d)x-(\d+)$", run["label"]).groups()
+        points.setdefault((round_name or "r1", int(executors)), []).append((int(offered), run["rate"]))
+    rounds = sorted({round_name for round_name, _ in points})
+    top_value = max(max(x, y) for series in points.values() for x, y in series)
+    step = next(s for s in (100, 200, 500, 1000, 2000) if top_value / s <= 6)
+    top_value = -(-top_value // step) * step
+    width, height, left, right, top, bottom = 720, 360, 64, 150, 54, 44
     plot_w, plot_h = width - left - right, height - top - bottom
-    top_value = 500
     sx = lambda x: left + x / top_value * plot_w
     sy = lambda y: top + plot_h - y / top_value * plot_h
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" font-family="{FONT}">',
              f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
              f'<text x="{left}" y="22" font-size="15" font-weight="600" fill="{INK}">Capacity: jobs per second offered and sustained</text>',
-             f'<text x="{left}" y="40" font-size="12" fill="{MUTED}">sustained jobs/s (first attempts), against offered</text>']
-    for value in range(0, top_value + 1, 100):
+             f'<text x="{left}" y="40" font-size="12" fill="{MUTED}">sustained jobs/s (first attempts), against offered'
+             f'{" · round 1 dashed" if len(rounds) > 1 else ""}'
+             f'{"".join(f" · {r}: {ROUND_NOTES[r]}" for r in rounds if r in ROUND_NOTES)}</text>']
+    for value in range(0, int(top_value) + 1, step):
         parts.append(f'<line x1="{left}" x2="{left + plot_w}" y1="{sy(value):.1f}" y2="{sy(value):.1f}" stroke="{GRID}"/>')
-        parts.append(f'<text x="{left - 8}" y="{sy(value) + 4:.1f}" font-size="11" fill="{MUTED}" text-anchor="end">{value}</text>')
-        parts.append(f'<text x="{sx(value):.1f}" y="{top + plot_h + 18}" font-size="11" fill="{MUTED}" text-anchor="middle">{value}</text>')
+        parts.append(f'<text x="{left - 8}" y="{sy(value) + 4:.1f}" font-size="11" fill="{MUTED}" text-anchor="end">{value:,}</text>')
+        parts.append(f'<text x="{sx(value):.1f}" y="{top + plot_h + 18}" font-size="11" fill="{MUTED}" text-anchor="middle">{value:,}</text>')
     parts.append(f'<text x="{left + plot_w / 2}" y="{height - 6}" font-size="12" fill="{MUTED}" text-anchor="middle">offered jobs/s</text>')
     parts.append(f'<line x1="{sx(0)}" y1="{sy(0)}" x2="{sx(top_value)}" y2="{sy(top_value)}" stroke="{MUTED}" stroke-dasharray="4 4"/>')
-    parts.append(f'<text x="{sx(440):.1f}" y="{sy(470):.1f}" font-size="11" fill="{MUTED}">all of it</text>')
-    groups = {}
-    for run in runs:
-        executors, offered = re.match(r"(\d)x-(\d+)", run["label"]).groups()
-        groups.setdefault(int(executors), []).append((int(offered), run["rate"]))
-    for index, executors in enumerate(sorted(groups)):
-        color = SERIES[index]
-        points = sorted(groups[executors])
-        if len(points) > 1:
-            path_data = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(points))
-            parts.append(f'<path d="{path_data}" fill="none" stroke="{color}" stroke-width="2"/>')
-        for x, y in points:
-            parts.append(f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="5" fill="{color}" stroke="#ffffff" stroke-width="2"/>')
-        x, y = points[-1]
-        parts.append(f'<text x="{sx(x) + 9:.1f}" y="{sy(y) + 4 + (index - 1) * 13:.1f}" font-size="11" fill="{INK}">{executors} executor{"s" if executors > 1 else ""}: {y:.0f}</text>')
+    labels = []
+    for (round_name, executors), series in sorted(points.items()):
+        color = SERIES[(executors - 1) % len(SERIES)]
+        dashed = len(rounds) > 1 and round_name == rounds[0]
+        series = sorted(series)
+        if len(series) > 1:
+            path_data = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(series))
+            parts.append(f'<path d="{path_data}" fill="none" stroke="{color}" stroke-width="2"{' stroke-dasharray="6 4"' if dashed else ''}/>')
+        for x, y in series:
+            fill = "#ffffff" if dashed else color
+            if round_name in ROUND_NOTES:
+                parts.append(f'<rect x="{sx(x) - 5:.1f}" y="{sy(y) - 5:.1f}" width="10" height="10" fill="{fill}" stroke="{color}" stroke-width="2"/>')
+            else:
+                parts.append(f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="5" fill="{fill}" stroke="{color}" stroke-width="2"/>')
+        x, y = series[-1]
+        name = f"{executors} executor{'s' if executors > 1 else ''}{f' · {round_name}' if len(rounds) > 1 else ''}: {y:,.0f}"
+        labels.append([sy(y) + 4, name])
+    labels.sort()
+    for i in range(1, len(labels)):  # labels sit in the right margin, nudged apart so they never overlap
+        labels[i][0] = max(labels[i][0], labels[i - 1][0] + 14)
+    for y, name in labels:
+        parts.append(f'<text x="{left + plot_w + 10}" y="{y:.1f}" font-size="11" fill="{INK}">{name}</text>')
     parts.append("</svg>")
     path.write_text("\n".join(parts))
 
@@ -112,7 +129,8 @@ def events(report):
 
 def main():
     benchmarks = BENCHMARKS.read_text()
-    for test in sorted(p for p in RESULTS.iterdir() if p.is_dir() and re.match(r"P\d-", p.name)):
+    tests = [p for p in RESULTS.iterdir() if p.is_dir() and re.match(r"P\d+-", p.name)]
+    for test in sorted(tests, key=lambda p: int(re.match(r"P(\d+)", p.name).group(1))):
         reports = sorted((test / "reports").glob("*/report.md")) if (test / "reports").exists() else []
         if not reports:
             continue
@@ -123,8 +141,8 @@ def main():
         summary = runs_table(runs, f"bench/results/{test.name}/")
         if many:
             lines += runs_table(runs) + [""]
-        if test.name.startswith("P2"):
-            capacity_chart(test / "capacity.svg", [run for run in runs if re.match(r"\dx-\d+", run["label"])])
+        if test.name.startswith(("P2-", "P10-")):
+            capacity_chart(test / "capacity.svg", [run for run in runs if re.match(r"(r\d+-)?\dx-\d+$", run["label"])])
             lines += ["![Capacity](capacity.svg)", ""]
             summary += ["", f"![Capacity](bench/results/{test.name}/capacity.svg)"]
         for run in runs:
@@ -145,7 +163,7 @@ def main():
             text = text.rstrip() + "\n\n## Conclusions\n\n*(not written yet)*\n"
         readme.write_text(text)
 
-        code = test.name[:2]
+        code = test.name.split("-")[0]
         benchmarks = re.sub(rf"(<!-- results:{code} -->\n).*?(<!-- /results:{code} -->)",
                             lambda m: m.group(1) + "\n".join(summary) + "\n" + m.group(2), benchmarks, flags=re.S)
         print(f"{test.name}: {len(runs)} runs")
