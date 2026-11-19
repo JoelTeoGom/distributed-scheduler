@@ -21,6 +21,8 @@ spec:
             - secretRef: { name: scheduler-env }
           env:
             - { name: GOMEMLIMIT, value: "900MiB" }
+            # Go 1.25 cannot read the CPU limit in WSL's hybrid cgroups and would run 12 threads; 500m rounds up to 1.
+            - { name: GOMAXPROCS, valueFrom: { resourceFieldRef: { resource: limits.cpu, divisor: "1" } } }
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -65,6 +67,8 @@ spec:
           env:
             - { name: CASSANDRA_HOSTS, value: "cassandra" }
             - { name: GOMEMLIMIT, value: "900MiB" }
+            # Go 1.25 cannot read the CPU limit in WSL's hybrid cgroups and would run 12 threads; 500m rounds up to 1.
+            - { name: GOMAXPROCS, valueFrom: { resourceFieldRef: { resource: limits.cpu, divisor: "1" } } }
           ports:
             - containerPort: 8081
           readinessProbe:
@@ -112,6 +116,8 @@ spec:
             - { name: SCHEDULE_LOOKAHEAD, value: "10s" }
             - { name: PPROF_ADDR, value: ":6060" }
             - { name: GOMEMLIMIT, value: "900MiB" }
+            # Go 1.25 cannot read the CPU limit in WSL's hybrid cgroups and would run 12 threads; 500m rounds up to 1.
+            - { name: GOMAXPROCS, valueFrom: { resourceFieldRef: { resource: limits.cpu, divisor: "1" } } }
           resources:
             requests: { cpu: 500m, memory: 1Gi }
             limits: { cpu: 500m, memory: 1Gi }
@@ -145,6 +151,8 @@ spec:
             - { name: PPROF_ADDR, value: ":6060" }
             - { name: ALLOW_PRIVATE_DESTINATIONS, value: "true" }
             - { name: GOMEMLIMIT, value: "900MiB" }
+            # Go 1.25 cannot read the CPU limit in WSL's hybrid cgroups and would run 12 threads; 500m rounds up to 1.
+            - { name: GOMAXPROCS, valueFrom: { resourceFieldRef: { resource: limits.cpu, divisor: "1" } } }
           resources:
             requests: { cpu: 500m, memory: 1Gi }
             limits: { cpu: 500m, memory: 1Gi }
@@ -171,6 +179,8 @@ spec:
           env:
             - { name: RECONCILE_INTERVAL, value: "10s" }
             - { name: GOMEMLIMIT, value: "900MiB" }
+            # Go 1.25 cannot read the CPU limit in WSL's hybrid cgroups and would run 12 threads; 500m rounds up to 1.
+            - { name: GOMAXPROCS, valueFrom: { resourceFieldRef: { resource: limits.cpu, divisor: "1" } } }
           resources:
             requests: { cpu: 500m, memory: 1Gi }
             limits: { cpu: 500m, memory: 1Gi }
@@ -199,6 +209,8 @@ spec:
             - { name: SUCCEEDED_RETENTION, value: "1h" }
             - { name: ARCHIVE_INTERVAL, value: "10s" }
             - { name: GOMEMLIMIT, value: "900MiB" }
+            # Go 1.25 cannot read the CPU limit in WSL's hybrid cgroups and would run 12 threads; 500m rounds up to 1.
+            - { name: GOMAXPROCS, valueFrom: { resourceFieldRef: { resource: limits.cpu, divisor: "1" } } }
           resources:
             requests: { cpu: 500m, memory: 1Gi }
             limits: { cpu: 500m, memory: 1Gi }
