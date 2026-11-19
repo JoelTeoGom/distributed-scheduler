@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Brings up the whole bench: databases and Toxiproxy in compose, a k3d cluster with the six services and the fake endpoint, and the emulated latency.
+# Brings up the whole bench: databases, Toxiproxy and the fake endpoint in compose, a k3d cluster with the six services, and the emulated latency.
 #   bench/scripts/up.sh                       # 1 ms latency, no disk cap
 #   LATENCY=off bench/scripts/up.sh
 #   DISK_CAP=1 bench/scripts/up.sh            # only on a kernel with BLK_DEV_THROTTLING (not the stock WSL one)
@@ -12,21 +12,23 @@ SERVICES=(task-service job-service scheduler-service executor-service reconciler
 # shellcheck disable=SC1091
 source .env
 
-log "databases and Toxiproxy (compose) and migrations"
+log "images"
+docker compose -f bench/infra/kubernetes/compose.build.yml build --quiet
+
+log "databases, Toxiproxy and the fake endpoint (compose) and migrations"
+# --force-recreate on the fake endpoint picks up a rebuilt image, whose tag never changes.
 "${COMPOSE[@]}" up -d --wait mysql cassandra toxiproxy
+"${COMPOSE[@]}" up -d --wait --force-recreate fake-endpoint
 "${COMPOSE[@]}" run --rm migrate-tasks
 "${COMPOSE[@]}" run --rm migrate-jobs
 "${COMPOSE[@]}" run --rm migrate-cassandra
-
-log "images"
-docker compose -f bench/infra/kubernetes/compose.build.yml build --quiet
 
 log "k3d cluster"
 if ! k3d cluster list "$CLUSTER" >/dev/null 2>&1; then
   k3d cluster create --config bench/infra/kubernetes/k3d.yaml
 fi
 # mysql:8.4 is already here from compose; latency.sh runs its client in a pod to measure the round trip.
-IMAGES=(scheduler/fake-endpoint:bench mysql:8.4)
+IMAGES=(mysql:8.4)
 for s in "${SERVICES[@]}"; do IMAGES+=("scheduler/$s:bench"); done
 k3d image import -c "$CLUSTER" "${IMAGES[@]}"
 
@@ -36,10 +38,15 @@ kubectl -n "$NS" create secret generic scheduler-env \
   --from-literal=DATABASE_DSN='scheduler:scheduler@tcp(mysql:3306)/scheduler?parseTime=true&loc=UTC&time_zone=%27%2B00%3A00%27' \
   --from-literal=JWT_SECRET="$JWT_SECRET" \
   --dry-run=client -o yaml | kubectl apply -f -
+# Until round 2 the fake endpoint ran in the cluster, behind a NodePort; that Service cannot become one without a selector.
+kubectl -n "$NS" delete deploy/fake-endpoint --ignore-not-found >/dev/null
+if [[ "$(kubectl -n "$NS" get svc fake-endpoint -o jsonpath='{.spec.selector}' 2>/dev/null)" != "" ]]; then
+  kubectl -n "$NS" delete svc fake-endpoint >/dev/null
+fi
 kubectl apply -f bench/infra/kubernetes/manifests/databases.yaml -f bench/infra/kubernetes/manifests/services.yaml -f bench/infra/kubernetes/manifests/fake-endpoint.yaml
 # The image tags never change (:bench), so a rebuilt image only reaches the pods through a restart.
 kubectl -n "$NS" rollout restart deploy >/dev/null
-for d in "${SERVICES[@]}" fake-endpoint; do
+for d in "${SERVICES[@]}"; do
   kubectl -n "$NS" rollout status "deploy/$d" --timeout=180s
 done
 

@@ -5,7 +5,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 CLUSTER=scheduler-bench
 NS=scheduler
-FAKE_ENDPOINT_URL=http://127.0.0.1:18090
+FAKE_ENDPOINT_URL=http://127.0.0.1:18091
 TOXIPROXY_URL=http://127.0.0.1:8474
 COMPOSE=(docker compose -f docker-compose.yml -f bench/infra/databases/compose.yml)
 # Off by default: the WSL kernel has no BLK_DEV_THROTTLING, so Docker accepts the cap and silently drops it.
