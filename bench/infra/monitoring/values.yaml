@@ -1,0 +1,101 @@
+# kube-prometheus-stack for the bench: Prometheus, Alertmanager, Grafana, node-exporter and kube-state-metrics.
+# Installed by bench/scripts/monitoring-up.sh with a pinned chart version; the chart pins every image it pulls.
+# Everything but node-exporter runs on the k3d server, which has no memory cap, so the stack takes nothing
+# from the 4 GB of the app nodes. CPU is shared anyway: the whole bench is one PC.
+
+# Placement on the server: k3d taints it CriticalAddonsOnly=true:NoExecute, like an EKS control plane.
+x-on-server: &on-server
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  tolerations:
+    - { key: CriticalAddonsOnly, operator: Exists }
+
+# k3s runs etcd, the scheduler, the controller manager and kube-proxy inside its own process and does not
+# expose their metrics; their scrapes and rules would only show targets DOWN by design.
+kubeEtcd: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeControllerManager: { enabled: false }
+kubeProxy: { enabled: false }
+
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeProxy: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    windows: false
+  disabled:
+    # It counts changes of process_start_time_seconds, but WSL's boot time steps forward 1 s every 30-40 s,
+    # so every process seems to restart. Restarts come from kube-state-metrics instead.
+    AlertmanagerClusterCrashlooping: true
+
+prometheus:
+  prometheusSpec:
+    <<: *on-server
+    # 5 s so a 1-minute rate has 12 samples: the bench's alert windows are minutes, not hours.
+    scrapeInterval: 5s
+    scrapeTimeout: 5s
+    evaluationInterval: 5s
+    retention: 2d
+    retentionSize: 8GB
+    resources:
+      requests: { cpu: 200m, memory: 1Gi }
+      limits: { memory: 1Gi }
+    # emptyDir: it survives a container restart (an OOM kill), not a new pod. A local-path volume cannot be used:
+    # k3s's provisioner creates it with a helper pod that does not tolerate the server's taint.
+    storageSpec:
+      emptyDir:
+        sizeLimit: 10Gi
+    # Pick up every PodMonitor, ServiceMonitor and PrometheusRule in the cluster, not only those labelled
+    # with this release: the repo's own (bench/infra/monitoring) carry no Helm label.
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    # MySQL runs in compose, outside the cluster: mysqld-exporter (bench/infra/databases/compose.yml) at a fixed IP.
+    additionalScrapeConfigs:
+      - job_name: mysqld
+        static_configs:
+          - targets: ["172.28.0.14:9104"]
+            labels: { instance: mysql }
+
+alertmanager:
+  alertmanagerSpec:
+    <<: *on-server
+    resources:
+      requests: { cpu: 10m, memory: 64Mi }
+      limits: { memory: 128Mi }
+
+grafana:
+  <<: *on-server
+  # Anonymous viewers so the screenshot script can open dashboards in kiosk mode; editing needs the admin login.
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+  resources:
+    requests: { cpu: 50m, memory: 256Mi }
+    limits: { memory: 512Mi }
+  # The sidecar loads every ConfigMap labelled grafana_dashboard=1, in any namespace (chart default).
+
+kube-state-metrics:
+  <<: *on-server
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { memory: 256Mi }
+
+prometheusOperator:
+  <<: *on-server
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { memory: 256Mi }
+  admissionWebhooks:
+    patch:
+      <<: *on-server
+
+# A DaemonSet on every node, the server included; the chart's default only tolerates NoSchedule taints.
+prometheus-node-exporter:
+  tolerations:
+    - operator: Exists

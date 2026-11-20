@@ -4,6 +4,7 @@
 #   LATENCY=off bench/scripts/up.sh
 #   DISK_CAP=1 bench/scripts/up.sh            # only on a kernel with BLK_DEV_THROTTLING (not the stock WSL one)
 #   DISK_DEVICE=/dev/sdd bench/scripts/up.sh  # with DISK_CAP=1, if Docker's data is not on /dev/sdc (`df /var/lib/docker`)
+#   MONITORING=1 bench/scripts/up.sh          # also the monitoring stack (bench/scripts/monitoring-up.sh)
 source "$(dirname "$0")/lib.sh"
 
 SERVICES=(task-service job-service scheduler-service executor-service reconciler-service archiver-service)
@@ -52,6 +53,10 @@ done
 
 bench/scripts/latency.sh "${LATENCY:-1ms}"
 bench/scripts/durability.sh
+
+if [[ "${MONITORING:-0}" == "1" ]]; then
+  bench/scripts/monitoring-up.sh
+fi
 
 log "ready"
 kubectl -n "$NS" get pods -o wide
