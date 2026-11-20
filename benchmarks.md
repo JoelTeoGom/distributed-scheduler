@@ -24,7 +24,7 @@ The tests answer the questions a product owner would ask before launch. The work
 | [P10](#p10--the-ceiling) | With the scheduler fixed, how many jobs per second can 1, 2 and 3 executors run, and how many workers do they need? |
 | [P11](#p11--peak-tuning) | How many jobs per second can the platform drain at the 09:00 peak, tuning only settings and replicas? |
 
-**Status:** every test ran on 2026-11-10. After the scheduler fix, P2, P3 and P4 ran again and P10 was added, on 2026-11-19; the peak was tuned in P11 on 2026-11-19 and 20, summed up step by step in [peak-tuning.pdf](docs/benchmarks/peak-tuning.pdf). [What we learned](#5-what-we-learned) sums them up, and [round 2](#round-2-after-the-scheduler-fix) compares the two rounds.
+**Status:** every test ran on 2026-11-10. After the scheduler fix, P2, P3 and P4 ran again and P10 was added, on 2026-11-19; the peak was tuned in P11 on 2026-11-19 and 20, summed up step by step in [peak-tuning.pdf](docs/benchmarks/peak-tuning.pdf). Everything in one page: [summary](docs/benchmarks/summary.md). [What we learned](#5-what-we-learned) sums them up, and [round 2](#round-2-after-the-scheduler-fix) compares the two rounds.
 
 > [!WARNING]
 > Every number here comes from an **emulated** AWS on one machine. It shows the order of magnitude and, above all, **what breaks first**. Comparisons between runs (1 vs 3 executors, before vs after a change) are more reliable than absolute values. See [threats to validity](#7-threats-to-validity).
