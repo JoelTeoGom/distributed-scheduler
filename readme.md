@@ -9,7 +9,7 @@ A distributed job scheduler in Go: `at` and `cron` as a service. Users schedule 
 Designed for big tech scale (~1B executions/day, ~500k/s peak). Built and run here at a much smaller scale.
 
 > [!IMPORTANT]
-> **What the benchmarks showed.** The design held up, and each limit I hit could be measured and moved. [All the tests and results](benchmarks.md) · [the peak, step by step (PDF)](docs/benchmarks/peak-tuning.pdf)
+> **What the benchmarks showed.** The design held up, and each limit I hit could be measured and moved. [All the tests and results](benchmarks.md) · [in one page](docs/benchmarks/summary.md) · [the peak, step by step (PDF)](docs/benchmarks/peak-tuning.pdf)
 >
 > - **The 09:00 peak, ~30,000 jobs due on one second: from 319 to 6,998 jobs per second with the same resources (×22), 13,166 with the executors at 1 CPU (×41).** The whole peak now starts within 4.3 s instead of 94 s, on pods of 0.5 vCPU and a MySQL of 2 vCPU.
 > - **How.** An N+1 in the scheduler, one `UPDATE` per task, capped it at ~300 jobs/s: one statement per batch doubled the peak's throughput. Go 1.25 ran 12 threads on half a CPU, because it cannot read the limit in WSL's cgroups: GOMAXPROCS from each pod's limit added 25%. Then a 200 ms scheduler tick, 4 executors and claims every 250 ms, each measured on its own.
