@@ -9,7 +9,7 @@ networks:
     ipam:
       config:
         - subnet: 172.28.0.0/16
-          ip_range: 172.28.128.0/17 # dynamic IPs (migrations, k3d nodes) come from here, never .10 to .13
+          ip_range: 172.28.128.0/17 # dynamic IPs (migrations, k3d nodes) come from here, never .10 to .14
 
 services:
   # RDS db.t4g.medium: 2 vCPU / 4 GB. RDS sizes the buffer pool at ~75% of RAM; the 128 MB default is not realistic.
@@ -60,3 +60,37 @@ services:
     networks:
       default:
         ipv4_address: 172.28.0.13
+
+  # MySQL's metrics for Prometheus, which scrapes this fixed IP (bench/infra/monitoring/values.yaml). Started only
+  # with the monitoring stack (bench/scripts/monitoring-up.sh). It connects to MySQL directly, not through Toxiproxy,
+  # so its queries neither pay the emulated latency nor show up in the proxy's numbers.
+  mysql-exporter-user:
+    image: mysql:8.4
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./bench/infra/databases/mysql-exporter-user.sql:/user.sql:ro # relative to the root compose file
+    entrypoint: ["sh", "-c", "mysql -hmysql -uroot -proot < /user.sql"]
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.21.0
+    depends_on:
+      mysql-exporter-user:
+        condition: service_completed_successfully
+    command:
+      - --mysqld.address=mysql:3306
+      - --mysqld.username=exporter
+      # Global status and variables are on by default: commits, row lock waits, threads running, redo fsyncs.
+      - --collect.info_schema.innodb_metrics
+      - --collect.info_schema.processlist
+      - --no-collect.info_schema.processlist.processes_by_host # every client is Toxiproxy's IP
+      - --collect.perf_schema.tableiowaits
+      - --collect.perf_schema.indexiowaits
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: exporter
+    cpus: 0.5
+    mem_limit: 128m
+    networks:
+      default:
+        ipv4_address: 172.28.0.14

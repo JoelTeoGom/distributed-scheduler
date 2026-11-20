@@ -5,6 +5,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 CLUSTER=scheduler-bench
 NS=scheduler
+MONITORING_NS=monitoring
 FAKE_ENDPOINT_URL=http://127.0.0.1:18091
 TOXIPROXY_URL=http://127.0.0.1:8474
 COMPOSE=(docker compose -f docker-compose.yml -f bench/infra/databases/compose.yml)
